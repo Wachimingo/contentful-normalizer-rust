@@ -38,3 +38,6 @@ pub fn normalize_labels(labels: Vec<ContentfulEntity>, includes: ContentfulInclu
     }
     return record;  
 }
+
+#[cfg(test)]
+mod tests;
