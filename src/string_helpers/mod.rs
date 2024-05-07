@@ -9,7 +9,16 @@ pub fn capitalize(input_string: &str) -> String {
 pub fn to_camel_case(input_string: &str)-> String {
     input_string
         .split("-")
-        .map(|word| capitalize(word))
+        .enumerate()
+        .map(|(i, word)| {
+            if i < 1 {
+                return word.to_string();
+            }
+            return capitalize(word);
+        })
         .collect::<Vec<String>>()
         .join("")
 }
+
+#[cfg(test)]
+mod tests;
