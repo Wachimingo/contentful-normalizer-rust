@@ -1,33 +1,38 @@
 #![allow(dead_code)]
-
-use std::collections::HashMap;
 use crate::string_helpers::to_camel_case;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use std::collections::HashMap;
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Sys {
     pub id: String,
 }
-#[derive(Clone)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct ContentfulEntity {
-    pub sys: Sys
+    pub sys: Sys,
 }
-#[derive(Clone)]
+#[derive(Clone, Deserialize)]
 pub struct Fields {
     pub slug: String,
     pub text: String,
+    pub data: Vec<HashMap<String, Value>>,
 }
-#[derive(Clone)]
+#[derive(Clone, Deserialize)]
 pub struct Entries {
     pub sys: Sys,
-    pub fields: Fields
+    pub fields: Fields,
 }
-#[derive(Clone)]
+#[derive(Clone, Deserialize)]
 pub struct ContentfulIncludes {
     pub entries: Vec<Entries>,
     // pub assets: Vec<Sys>,
 }
 
-pub fn normalize_labels(labels: Vec<ContentfulEntity>, includes: ContentfulIncludes)-> HashMap<String, String>{
+pub fn normalize_labels(
+    labels: Vec<ContentfulEntity>,
+    includes: ContentfulIncludes,
+) -> HashMap<String, String> {
     let mut record: HashMap<String, String> = HashMap::new();
     for label in labels {
         for entry in &includes.entries {
@@ -36,7 +41,22 @@ pub fn normalize_labels(labels: Vec<ContentfulEntity>, includes: ContentfulInclu
             }
         }
     }
-    return record;  
+    return record;
+}
+
+pub fn normalize_configs(
+    configs: Vec<ContentfulEntity>,
+    includes: ContentfulIncludes,
+) -> HashMap<String, Vec<HashMap<String, Value>>> {
+    let mut record: HashMap<String, Vec<HashMap<String, Value>>> = HashMap::new();
+    for config in configs {
+        for entry in &includes.entries {
+            if config.sys.id == entry.sys.id {
+                record.insert(to_camel_case(&entry.fields.slug), entry.fields.data.clone());
+            }
+        }
+    }
+    return record;
 }
 
 #[cfg(test)]
