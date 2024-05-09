@@ -1,33 +1,9 @@
 #![allow(dead_code)]
 use crate::string_helpers::to_camel_case;
-use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-
-#[derive(Clone, Deserialize, Serialize)]
-pub struct Sys {
-    pub id: String,
-}
-#[derive(Clone, Deserialize, Serialize)]
-pub struct ContentfulEntity {
-    pub sys: Sys,
-}
-#[derive(Clone, Deserialize)]
-pub struct Fields {
-    pub slug: String,
-    pub text: String,
-    pub data: Vec<HashMap<String, Value>>,
-}
-#[derive(Clone, Deserialize)]
-pub struct Entries {
-    pub sys: Sys,
-    pub fields: Fields,
-}
-#[derive(Clone, Deserialize)]
-pub struct ContentfulIncludes {
-    pub entries: Vec<Entries>,
-    // pub assets: Vec<Sys>,
-}
+mod structs;
+use self::structs::{ContentfulEntity, ContentfulIncludes};
 
 pub fn normalize_labels(
     labels: Vec<ContentfulEntity>,
