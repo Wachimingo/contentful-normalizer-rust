@@ -1,9 +1,9 @@
-#![allow(dead_code)]
+#![allow(dead_code, unused_variables, unused_mut)]
 use crate::string_helpers::to_camel_case;
 use serde_json::Value;
 use std::collections::HashMap;
 mod structs;
-use self::structs::{ContentfulEntity, ContentfulIncludes};
+use self::structs::{ContentfulEntity, ContentfulEntry, ContentfulIncludes};
 
 pub fn normalize_labels(
     labels: Vec<ContentfulEntity>,
@@ -33,6 +33,21 @@ pub fn normalize_configs(
         }
     }
     return record;
+}
+
+pub fn parse_fields(entry: ContentfulEntry, includes: ContentfulIncludes){
+    let mut parse_fields: HashMap<String, Value> = HashMap::new();
+    for (key, value) in entry.fields.iter() {
+        match value {
+            Value::Object(object) => {
+                if object["sys"]["linkType"] == "Asset" {
+                    
+                }
+            },
+            // Value::Array(v) => {}
+            none => {}
+        }
+    };
 }
 
 #[cfg(test)]
