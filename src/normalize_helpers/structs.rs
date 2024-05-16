@@ -49,8 +49,8 @@ pub struct ContentfulEntity {
 #[derive(Clone, Deserialize)]
 pub struct Fields {
     pub slug: String,
-    pub text: String,
-    pub data: Vec<HashMap<String, Value>>,
+    pub text: Option<String>,
+    pub data: Option<Vec<HashMap<String, Value>>>,
 }
 #[derive(Clone, Deserialize)]
 pub struct Entries {

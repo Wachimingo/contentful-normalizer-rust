@@ -13,7 +13,9 @@ pub fn normalize_labels(
     for label in labels {
         for entry in &includes.entries {
             if label.sys.id == entry.sys.id {
-                record.insert(to_camel_case(&entry.fields.slug), entry.fields.text.clone());
+                if let Some(ref text) = entry.fields.text {
+                    record.insert(to_camel_case(&entry.fields.slug), text.clone());
+                }
             }
         }
     }
@@ -28,7 +30,10 @@ pub fn normalize_configs(
     for config in configs {
         for entry in &includes.entries {
             if config.sys.id == entry.sys.id {
-                record.insert(to_camel_case(&entry.fields.slug), entry.fields.data.clone());
+                // This way allows for coping the struct values, compared to match statement where data couldn't be moved
+                if let Some(ref data) = entry.fields.data {
+                    record.insert(to_camel_case(&entry.fields.slug), data.clone());
+                }
             }
         }
     }
