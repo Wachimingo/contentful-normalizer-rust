@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-use serde_json::Value;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use std::collections::HashMap;
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct ChildSys {
@@ -13,7 +13,7 @@ pub struct ChildSys {
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Space {
-    pub sys: ChildSys,    
+    pub sys: ChildSys,
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -46,24 +46,97 @@ pub struct TopLevelSys {
 pub struct ContentfulEntity {
     pub sys: TopLevelSys,
 }
+
+pub type Labels = Vec<ChildSys>;
+pub type Configs = Vec<ChildSys>;
+pub type Images = Vec<ChildSys>;
+pub type CommonTermsAndConditionsItems = Vec<ChildSys>;
+pub type Data = Vec<HashMap<String, Value>>;
+
 #[derive(Clone, Deserialize)]
 pub struct Fields {
     pub slug: String,
     pub text: Option<String>,
-    pub data: Option<Vec<HashMap<String, Value>>>,
+    pub link: Option<String>,
+    pub data: Option<Data>,
+    pub labels: Option<Labels>,
+    pub configs: Option<Configs>,
+    pub images: Option<Images>,
+    #[serde(rename = "fallbackImage")]
+    pub fallback_image: Option<ChildSys>,
+    #[serde(rename = "commonTermsAndConditionsItems")]
+    pub common_terms_and_conditions_items: Option<CommonTermsAndConditionsItems>,
+    #[serde(rename = "confirmationText")]
+    pub confirmation_text: Option<String>,
+    #[serde(rename = "errorText")]
+    pub error_text: Option<String>,
+    #[serde(rename = "confirmButtonText")]
+    pub confirm_button_text: Option<String>,
 }
+
+pub enum FieldsItems {
+    Slug(String),
+    Text(String),
+    Link(String),
+    Data(Data),
+    Labels(Labels),
+    Configs(Configs),
+    Images(Images),
+    FallbackImage(ChildSys),
+    CommonTermsAndConditionsItems(CommonTermsAndConditionsItems),
+    ConfirmationText(String),
+    ErrorText(String),
+    ConfirmButtonText(String),
+}
+
+impl IntoIterator for Fields {
+    type Item = (String, Option<FieldsItems>);
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        vec![
+            ("text".to_string(), self.text.map(FieldsItems::Text)),
+            ("link".to_string(), self.link.map(FieldsItems::Link)),
+            ("slug".to_string(), Some(FieldsItems::Slug(self.slug))),
+            ("data".to_string(), self.data.map(FieldsItems::Data)),
+            ("labels".to_string(), self.labels.map(FieldsItems::Labels)),
+            (
+                "configs".to_string(),
+                self.configs.map(FieldsItems::Configs),
+            ),
+            (
+                "fallback_image".to_string(),
+                self.fallback_image.map(FieldsItems::FallbackImage),
+            ),
+            (
+                "common_terms_and_conditions_items".to_string(),
+                self.common_terms_and_conditions_items
+                    .map(FieldsItems::CommonTermsAndConditionsItems),
+            ),
+            (
+                "confirmation_text".to_string(),
+                self.confirmation_text.map(FieldsItems::ConfirmationText),
+            ),
+            (
+                "error_text".to_string(),
+                self.error_text.map(FieldsItems::ErrorText),
+            ),
+            (
+                "confirm_button_text".to_string(),
+                self.confirm_button_text.map(FieldsItems::ConfirmButtonText),
+            ),
+        ]
+        .into_iter()
+    }
+}
+
 #[derive(Clone, Deserialize)]
-pub struct Entries {
+pub struct Entry {
     pub sys: TopLevelSys,
     pub fields: Fields,
 }
 #[derive(Clone, Deserialize)]
 pub struct ContentfulIncludes {
-    pub entries: Vec<Entries>,
+    pub entries: Vec<Entry>,
     pub assets: Vec<TopLevelSys>,
-}
-
-#[derive(Clone, Deserialize)]
-pub struct ContentfulEntry {
-    pub fields: HashMap<String, Value>,
 }

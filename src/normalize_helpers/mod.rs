@@ -3,7 +3,7 @@ use crate::string_helpers::to_camel_case;
 use serde_json::Value;
 use std::collections::HashMap;
 mod structs;
-use self::structs::{ContentfulEntity, ContentfulEntry, ContentfulIncludes};
+use self::structs::{ContentfulEntity, ContentfulIncludes, Entry};
 
 pub fn normalize_labels(
     labels: Vec<ContentfulEntity>,
@@ -40,18 +40,27 @@ pub fn normalize_configs(
     return record;
 }
 
-pub fn parse_fields(entry: ContentfulEntry, includes: ContentfulIncludes){
-    let mut parse_fields: HashMap<String, Value> = HashMap::new();
-    for (key, value) in entry.fields.iter() {
-        match value {
-            Value::Object(object) => {
-                if object["sys"]["linkType"] == "Asset" {
+// pub fn parse_fields(entry: Entry, includes: ContentfulIncludes){
+//     let mut parse_fields: HashMap<String, Value> = HashMap::new();
+//     for (key, value) in entry.fields.iter() {
+//         match value {
+//             Value::Object(object) => {
+//                 if object["sys"]["linkType"] == "Asset" {
                     
-                }
-            },
-            // Value::Array(v) => {}
-            none => {}
-        }
+//                 }
+//             },
+//             // Value::Array(v) => {}
+//             none => {}
+//         }
+//     };
+// }
+
+pub fn parse_fields(entry: Entry, includes: ContentfulIncludes){
+    let mut parse_fields: HashMap<String, Value> = HashMap::new();
+    for (key, value) in entry.fields.into_iter() {
+        // match value {
+            
+        // }
     };
 }
 
