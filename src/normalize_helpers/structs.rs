@@ -74,7 +74,7 @@ pub struct Fields {
     pub confirm_button_text: Option<String>,
 }
 
-pub enum FieldsItems {
+pub enum FieldItems {
     Slug(String),
     Text(String),
     Link(String),
@@ -90,40 +90,40 @@ pub enum FieldsItems {
 }
 
 impl IntoIterator for Fields {
-    type Item = (String, Option<FieldsItems>);
+    type Item = (String, Option<FieldItems>);
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
         vec![
-            ("text".to_string(), self.text.map(FieldsItems::Text)),
-            ("link".to_string(), self.link.map(FieldsItems::Link)),
-            ("slug".to_string(), Some(FieldsItems::Slug(self.slug))),
-            ("data".to_string(), self.data.map(FieldsItems::Data)),
-            ("labels".to_string(), self.labels.map(FieldsItems::Labels)),
+            ("text".to_string(), self.text.map(FieldItems::Text)),
+            ("link".to_string(), self.link.map(FieldItems::Link)),
+            ("slug".to_string(), Some(FieldItems::Slug(self.slug))),
+            ("data".to_string(), self.data.map(FieldItems::Data)),
+            ("labels".to_string(), self.labels.map(FieldItems::Labels)),
             (
                 "configs".to_string(),
-                self.configs.map(FieldsItems::Configs),
+                self.configs.map(FieldItems::Configs),
             ),
             (
                 "fallback_image".to_string(),
-                self.fallback_image.map(FieldsItems::FallbackImage),
+                self.fallback_image.map(FieldItems::FallbackImage),
             ),
             (
                 "common_terms_and_conditions_items".to_string(),
                 self.common_terms_and_conditions_items
-                    .map(FieldsItems::CommonTermsAndConditionsItems),
+                    .map(FieldItems::CommonTermsAndConditionsItems),
             ),
             (
                 "confirmation_text".to_string(),
-                self.confirmation_text.map(FieldsItems::ConfirmationText),
+                self.confirmation_text.map(FieldItems::ConfirmationText),
             ),
             (
                 "error_text".to_string(),
-                self.error_text.map(FieldsItems::ErrorText),
+                self.error_text.map(FieldItems::ErrorText),
             ),
             (
                 "confirm_button_text".to_string(),
-                self.confirm_button_text.map(FieldsItems::ConfirmButtonText),
+                self.confirm_button_text.map(FieldItems::ConfirmButtonText),
             ),
         ]
         .into_iter()

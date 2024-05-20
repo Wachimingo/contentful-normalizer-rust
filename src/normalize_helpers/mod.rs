@@ -58,9 +58,14 @@ pub fn normalize_configs(
 pub fn parse_fields(entry: Entry, includes: ContentfulIncludes){
     let mut parse_fields: HashMap<String, Value> = HashMap::new();
     for (key, value) in entry.fields.into_iter() {
-        // match value {
-            
-        // }
+        match value {
+            Some(value) => {
+                match value {             
+                    _ => ()
+                }
+            },
+            None => ()
+        }
     };
 }
 
