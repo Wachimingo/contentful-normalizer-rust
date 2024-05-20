@@ -2,42 +2,25 @@ use serde::{Deserialize, Serialize};
 
 use super::common_structs::ChildSys;
 
-pub type Labels = Vec<ChildSys>;
-pub type Configs = Vec<ChildSys>;
-pub type Images = Vec<ChildSys>;
-
-// #[derive(Clone, Deserialize, Serialize)]
-// pub enum Labels {
-//     Single(ChildSys),
-//     Multiple(Vec<ChildSys>)
-// }
-
-// #[derive(Clone, Deserialize, Serialize)]
-// pub enum Configs {
-//     Single(ChildSys),
-//     Multiple(Vec<ChildSys>)
-// }
-// #[derive(Clone, Deserialize, Serialize)]
-// pub enum Images {
-//     Single(ChildSys),
-//     Multiple(Vec<ChildSys>)
-// }
+#[derive(Clone, Deserialize, Serialize)]
+pub enum Item {
+    Single(ChildSys),
+    Multiple(Vec<ChildSys>)
+}
 
 pub enum ItemsFieldTypes {
     Slug(String),
     Title(String),    
-    Labels(Labels),
-    Configs(Configs),
-    Images(Images),    
+    Item(Item),
 }
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct ItemsFields {
     pub slug: String,
     pub title: Option<String>,
-    pub labels: Option<Labels>,
-    pub configs: Option<Configs>,
-    pub images: Option<Images>
+    pub labels: Option<Item>,
+    pub configs: Option<Item>,
+    pub images: Option<Item>
 }
 
 impl IntoIterator for ItemsFields {
@@ -48,9 +31,9 @@ impl IntoIterator for ItemsFields {
         vec![
             ("slug".to_string(), Some(ItemsFieldTypes::Slug(self.slug))),
             ("title".to_string(), self.title.map(ItemsFieldTypes::Title)),
-            ("labels".to_string(), self.labels.map(ItemsFieldTypes::Labels)),
-            ("configs".to_string(), self.configs.map(ItemsFieldTypes::Configs)),
-            ("images".to_string(), self.images.map(ItemsFieldTypes::Images)),
+            ("labels".to_string(), self.labels.map(ItemsFieldTypes::Item)),
+            ("configs".to_string(), self.configs.map(ItemsFieldTypes::Item)),
+            ("images".to_string(), self.images.map(ItemsFieldTypes::Item)),
         ].into_iter()
     }
 }

@@ -3,7 +3,7 @@ use crate::string_helpers::to_camel_case;
 use serde_json::Value;
 use std::collections::HashMap;
 mod structs;
-use self::structs::{common_structs::ContentfulEntity, items_structs::ItemsFieldTypes, ContentfulIncludes, IncludesEntry, ItemEntry};
+use self::structs::{common_structs::ContentfulEntity, items_structs::{Item, ItemsFieldTypes}, ContentfulIncludes, IncludesEntry, ItemEntry};
 
 pub fn normalize_labels(
     labels: Vec<ContentfulEntity>,
@@ -40,52 +40,47 @@ pub fn normalize_configs(
     return record;
 }
 
-// pub fn parse_fields(entry: Entry, includes: ContentfulIncludes){
-//     let mut parse_fields: HashMap<String, Value> = HashMap::new();
-//     for (key, value) in entry.fields.iter() {
-//         match value {
-//             Value::Object(object) => {
-//                 if object["sys"]["linkType"] == "Asset" {
-                    
-//                 }
-//             },
-//             // Value::Array(v) => {}
-//             none => {}
-//         }
-//     };
-// }
-
-// pub fn parse_fields(entry: Entry, includes: ContentfulIncludes){
-//     let mut parse_fields: HashMap<String, Value> = HashMap::new();
-//     for (key, value) in entry.fields.into_iter() {
-//         match value {
-//             Some(value) => {
-//                 match value {
-                              
-//                     _ => ()
-//                 }
-//             },
-//             None => ()
-//         }
-//     };
-// }
-
 pub fn parse_fields(entry: ItemEntry, includes: ContentfulIncludes){
     let mut parse_fields: HashMap<String, IncludesEntry> = HashMap::new();
     for (key, value) in entry.fields.into_iter() {
         match value {
             Some(value) => {
                 match value {
-                    ItemsFieldTypes::Labels(value) |
-                    ItemsFieldTypes::Configs(value) |
-                    ItemsFieldTypes::Images(value) => {
-                        // if value[0].link_type == "Asset" {
-                        //     for asset in &includes.assets {
-                        //         if asset.sys.id == value[0].id {
-                        //             parse_fields.insert(key.clone(), asset.clone());
-                        //         }
-                        //     }
-                        // }
+                    ItemsFieldTypes::Item(value) => { // if item field entry is component, image or config
+                        match value {
+                            Item::Single(value) => { // if value is an object or array
+                                if value.link_type == "Asset" {
+                                    for asset in &includes.assets {
+                                        if asset.sys.id == value.id {
+                                            parse_fields.insert(key.clone(), asset.clone());
+                                        }
+                                    }
+                                } else {
+                                    for includes_entry in &includes.entries {
+                                        if includes_entry.sys.id == value.id {
+                                            parse_fields.insert(key.clone(), includes_entry.clone());
+                                        }
+                                    }
+                                }                                
+                            },
+                            Item::Multiple(value) => {
+                                for value_item in value {
+                                    if value_item.link_type == "Asset" {
+                                        for asset in &includes.assets {
+                                            if asset.sys.id == value_item.id {
+                                                parse_fields.insert(key.clone(), asset.clone());
+                                            }
+                                        }
+                                    } else {
+                                        for includes_entry in &includes.entries {
+                                            if includes_entry.sys.id == value_item.id {
+                                                parse_fields.insert(key.clone(), includes_entry.clone());
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     },
                     _ => (),
                 }
