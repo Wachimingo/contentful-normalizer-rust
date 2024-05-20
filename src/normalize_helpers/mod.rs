@@ -3,7 +3,7 @@ use crate::string_helpers::to_camel_case;
 use serde_json::Value;
 use std::collections::HashMap;
 mod structs;
-use self::structs::{ContentfulEntity, ContentfulIncludes, Entry};
+use self::structs::{common_structs::ContentfulEntity, items_structs::ItemsFieldTypes, ContentfulIncludes, IncludesEntry, ItemEntry};
 
 pub fn normalize_labels(
     labels: Vec<ContentfulEntity>,
@@ -55,13 +55,39 @@ pub fn normalize_configs(
 //     };
 // }
 
-pub fn parse_fields(entry: Entry, includes: ContentfulIncludes){
-    let mut parse_fields: HashMap<String, Value> = HashMap::new();
+// pub fn parse_fields(entry: Entry, includes: ContentfulIncludes){
+//     let mut parse_fields: HashMap<String, Value> = HashMap::new();
+//     for (key, value) in entry.fields.into_iter() {
+//         match value {
+//             Some(value) => {
+//                 match value {
+                              
+//                     _ => ()
+//                 }
+//             },
+//             None => ()
+//         }
+//     };
+// }
+
+pub fn parse_fields(entry: ItemEntry, includes: ContentfulIncludes){
+    let mut parse_fields: HashMap<String, IncludesEntry> = HashMap::new();
     for (key, value) in entry.fields.into_iter() {
         match value {
             Some(value) => {
-                match value {             
-                    _ => ()
+                match value {
+                    ItemsFieldTypes::Labels(value) |
+                    ItemsFieldTypes::Configs(value) |
+                    ItemsFieldTypes::Images(value) => {
+                        // if value[0].link_type == "Asset" {
+                        //     for asset in &includes.assets {
+                        //         if asset.sys.id == value[0].id {
+                        //             parse_fields.insert(key.clone(), asset.clone());
+                        //         }
+                        //     }
+                        // }
+                    },
+                    _ => (),
                 }
             },
             None => ()
