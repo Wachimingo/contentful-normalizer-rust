@@ -3,7 +3,9 @@ pub mod common_structs;
 pub mod includes_structs;
 pub mod items_structs;
 
-use self::{common_structs::TopLevelSys, includes_structs::IncludesFields, items_structs::ItemsFields};
+use self::{
+    common_structs::TopLevelSys, includes_structs::IncludesFields, items_structs::ItemsFields,
+};
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct IncludesEntry {

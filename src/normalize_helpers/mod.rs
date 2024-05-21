@@ -44,25 +44,30 @@ pub fn normalize_configs(
     return record;
 }
 
-pub fn find_and_insert(link_type: &str, id: &str, key: &str, includes: &ContentfulIncludes, parse_fields: &mut HashMap<String, IncludesEntry> ) -> (){
+pub fn find_and_insert(
+    link_type: &str,
+    id: &str,
+    key: &str,
+    includes: &ContentfulIncludes,
+    collector: &mut HashMap<String, IncludesEntry>,
+) -> () {
     if link_type == "Asset" {
         for asset in &includes.assets {
             if asset.sys.id == id {
-                parse_fields.insert(key.to_string(), asset.clone());
+                collector.insert(key.to_string(), asset.clone());
             }
         }
     } else {
         for includes_entry in &includes.entries {
             if includes_entry.sys.id == id {
-                parse_fields
-                    .insert(key.to_string(), includes_entry.clone());
+                collector.insert(key.to_string(), includes_entry.clone());
             }
         }
     }
 }
 
-pub fn parse_fields(entry: ItemEntry, includes: ContentfulIncludes) {
-    let mut parse_fields: HashMap<String, IncludesEntry> = HashMap::new();
+pub fn parse_fields(entry: ItemEntry, includes: &ContentfulIncludes) {
+    let mut collector: HashMap<String, IncludesEntry> = HashMap::new();
     for (key, value) in entry.fields.into_iter() {
         match value {
             Some(value) => {
@@ -72,12 +77,31 @@ pub fn parse_fields(entry: ItemEntry, includes: ContentfulIncludes) {
                         match value {
                             Item::Single(value) => {
                                 // if value is an object or array
-                                find_and_insert(&value.link_type, &value.id, &key, &includes, &mut parse_fields)
+                                find_and_insert(
+                                    &value.link_type,
+                                    &value.id,
+                                    &key,
+                                    &includes,
+                                    &mut collector,
+                                )
                             }
                             Item::Multiple(value) => {
                                 for value_item in value {
-                                    find_and_insert(&value_item.link_type, &value_item.id, &key, &includes, &mut parse_fields)
+                                    find_and_insert(
+                                        &value_item.link_type,
+                                        &value_item.id,
+                                        &key,
+                                        &includes,
+                                        &mut collector,
+                                    )
                                 }
+                            }
+                        }
+                    }
+                    ItemsFieldTypes::Entry(value) => {
+                        for includes_entry in &includes.entries {
+                            if value.sys.id == includes_entry.sys.id {
+                                parse_fields(value.clone(), &includes);
                             }
                         }
                     }

@@ -14,7 +14,6 @@ pub struct Space {
     pub sys: ChildSys,
 }
 
-
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Environment {
     pub sys: ChildSys,

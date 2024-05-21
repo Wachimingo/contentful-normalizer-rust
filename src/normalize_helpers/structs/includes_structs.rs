@@ -47,8 +47,11 @@ impl IntoIterator for IncludesFields {
         vec![
             ("text".to_string(), self.text.map(IncludesFieldTypes::Text)),
             ("link".to_string(), self.link.map(IncludesFieldTypes::Link)),
-            ("slug".to_string(), Some(IncludesFieldTypes::Slug(self.slug))),
-            ("data".to_string(), self.data.map(IncludesFieldTypes::Data)),            
+            (
+                "slug".to_string(),
+                Some(IncludesFieldTypes::Slug(self.slug)),
+            ),
+            ("data".to_string(), self.data.map(IncludesFieldTypes::Data)),
             (
                 "fallback_image".to_string(),
                 self.fallback_image.map(IncludesFieldTypes::FallbackImage),
@@ -60,7 +63,8 @@ impl IntoIterator for IncludesFields {
             ),
             (
                 "confirmation_text".to_string(),
-                self.confirmation_text.map(IncludesFieldTypes::ConfirmationText),
+                self.confirmation_text
+                    .map(IncludesFieldTypes::ConfirmationText),
             ),
             (
                 "error_text".to_string(),
@@ -68,7 +72,8 @@ impl IntoIterator for IncludesFields {
             ),
             (
                 "confirm_button_text".to_string(),
-                self.confirm_button_text.map(IncludesFieldTypes::ConfirmButtonText),
+                self.confirm_button_text
+                    .map(IncludesFieldTypes::ConfirmButtonText),
             ),
         ]
         .into_iter()
