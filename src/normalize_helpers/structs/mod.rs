@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 pub mod common_structs;
 pub mod includes_structs;
 pub mod items_structs;
+pub mod result_structs;
 
 use self::{
     common_structs::TopLevelSys, includes_structs::IncludesFields, items_structs::ItemsFields,

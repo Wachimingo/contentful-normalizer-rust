@@ -6,7 +6,8 @@ mod structs;
 use self::structs::{
     common_structs::ContentfulEntity,
     items_structs::{Item, ItemsFieldTypes},
-    ContentfulIncludes, IncludesEntry, ItemEntry,
+    result_structs::{ParsedIncludesAssetEntry, ParsedIncludesEntry},
+    ContentfulIncludes, ItemEntry,
 };
 
 pub fn normalize_labels(
@@ -49,25 +50,33 @@ pub fn find_and_insert(
     id: &str,
     key: &str,
     includes: &ContentfulIncludes,
-    collector: &mut HashMap<String, IncludesEntry>,
+    collector: &mut HashMap<String, ParsedIncludesEntry>,
 ) -> () {
     if link_type == "Asset" {
         for asset in &includes.assets {
             if asset.sys.id == id {
-                collector.insert(key.to_string(), asset.clone());
+                let parse_asset = ParsedIncludesAssetEntry {
+                    sys: asset.sys.clone(),
+                    fields: asset.fields.clone(),
+                    url: asset.fields.file.as_ref().and_then(|file| file.url.clone()),
+                };
+                collector.insert(key.to_string(), ParsedIncludesEntry::Asset(parse_asset));
             }
         }
     } else {
         for includes_entry in &includes.entries {
             if includes_entry.sys.id == id {
-                collector.insert(key.to_string(), includes_entry.clone());
+                collector.insert(
+                    key.to_string(),
+                    ParsedIncludesEntry::Entry(includes_entry.clone()),
+                );
             }
         }
     }
 }
 
 pub fn parse_fields(entry: ItemEntry, includes: &ContentfulIncludes) {
-    let mut collector: HashMap<String, IncludesEntry> = HashMap::new();
+    let mut collector: HashMap<String, ParsedIncludesEntry> = HashMap::new();
     for (key, value) in entry.fields.into_iter() {
         match value {
             Some(value) => {

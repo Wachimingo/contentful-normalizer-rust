@@ -8,6 +8,11 @@ use super::common_structs::ChildSys;
 pub type CommonTermsAndConditionsItems = Vec<ChildSys>;
 pub type Data = Vec<HashMap<String, Value>>;
 
+#[derive(Clone, Deserialize, Serialize)]
+pub struct File {
+    pub url: Option<String>,
+}
+
 pub enum IncludesFieldTypes {
     Slug(String),
     Text(String),
@@ -18,6 +23,7 @@ pub enum IncludesFieldTypes {
     ConfirmationText(String),
     ErrorText(String),
     ConfirmButtonText(String),
+    File(File),
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -36,6 +42,7 @@ pub struct IncludesFields {
     pub error_text: Option<String>,
     #[serde(rename = "confirmButtonText")]
     pub confirm_button_text: Option<String>,
+    pub file: Option<File>,
 }
 
 // This is the way to make an struct be able to iter as a hashmap does
@@ -74,6 +81,11 @@ impl IntoIterator for IncludesFields {
                 "confirm_button_text".to_string(),
                 self.confirm_button_text
                     .map(IncludesFieldTypes::ConfirmButtonText),
+            ),
+            (
+                "file".to_string(),
+                self.file
+                    .map(IncludesFieldTypes::File),
             ),
         ]
         .into_iter()
