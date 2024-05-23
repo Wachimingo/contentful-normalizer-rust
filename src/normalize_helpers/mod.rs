@@ -2,7 +2,7 @@
 use crate::string_helpers::to_camel_case;
 use serde_json::Value;
 use std::collections::HashMap;
-mod structs;
+pub mod structs;
 use self::structs::{
     common_structs::ContentfulEntity,
     items_structs::{Item, ItemsFieldTypes},
@@ -87,8 +87,8 @@ pub fn parse_fields(entry: ItemEntry, includes: &ContentfulIncludes) {
                             Item::Single(value) => {
                                 // if value is an object or array
                                 find_and_insert(
-                                    &value.link_type,
-                                    &value.id,
+                                    &value.sys.link_type,
+                                    &value.sys.id,
                                     &key,
                                     &includes,
                                     &mut collector,
@@ -97,8 +97,8 @@ pub fn parse_fields(entry: ItemEntry, includes: &ContentfulIncludes) {
                             Item::Multiple(value) => {
                                 for value_item in value {
                                     find_and_insert(
-                                        &value_item.link_type,
-                                        &value_item.id,
+                                        &value_item.sys.link_type,
+                                        &value_item.sys.id,
                                         &key,
                                         &includes,
                                         &mut collector,

@@ -8,7 +8,7 @@ use super::common_structs::ChildSys;
 pub type CommonTermsAndConditionsItems = Vec<ChildSys>;
 pub type Data = Vec<HashMap<String, Value>>;
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct File {
     pub url: Option<String>,
 }
@@ -26,7 +26,7 @@ pub enum IncludesFieldTypes {
     File(File),
 }
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct IncludesFields {
     pub slug: String,
     pub text: Option<String>,

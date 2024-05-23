@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use super::*;
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ParsedIncludesAssetEntry {
     pub sys: TopLevelSys,
     pub fields: IncludesFields,
