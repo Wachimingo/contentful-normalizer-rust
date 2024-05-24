@@ -41,7 +41,7 @@ pub struct TopLevelSys {
     pub environment: Environment,
     pub revision: u8,
     #[serde(rename = "contentType")]
-    pub content_type: ContentType,
+    pub content_type: Option<ContentType>,
     pub locale: String,
 }
 #[derive(Clone, Debug, Deserialize, Serialize)]

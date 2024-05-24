@@ -27,23 +27,23 @@ pub fn normalize_labels(
     return record;
 }
 
-pub fn normalize_configs(
-    configs: Vec<ContentfulEntity>,
-    includes: ContentfulIncludes,
-) -> HashMap<String, Vec<HashMap<String, Value>>> {
-    let mut record: HashMap<String, Vec<HashMap<String, Value>>> = HashMap::new();
-    for config in configs {
-        for entry in &includes.entries {
-            if config.sys.id == entry.sys.id {
-                // This way allows for coping the struct values, compared to match statement where data couldn't be moved
-                if let Some(ref data) = entry.fields.data {
-                    record.insert(to_camel_case(&entry.fields.slug), data.clone());
-                }
-            }
-        }
-    }
-    return record;
-}
+// pub fn normalize_configs(
+//     configs: Vec<ContentfulEntity>,
+//     includes: ContentfulIncludes,
+// ) -> HashMap<String, Vec<HashMap<String, Value>>> {
+//     let mut record: HashMap<String, Vec<HashMap<String, Value>>> = HashMap::new();
+//     for config in configs {
+//         for entry in &includes.entries {
+//             if config.sys.id == entry.sys.id {
+//                 // This way allows for coping the struct values, compared to match statement where data couldn't be moved
+//                 if let Some(ref data) = entry.fields.data {
+//                     record.insert(to_camel_case(&entry.fields.slug), data.clone());
+//                 }
+//             }
+//         }
+//     }
+//     return record;
+// }
 
 pub fn find_and_insert(
     link_type: &str,

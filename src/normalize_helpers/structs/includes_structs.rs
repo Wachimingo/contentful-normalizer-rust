@@ -6,7 +6,11 @@ use serde_json::Value;
 use super::common_structs::ChildSys;
 
 pub type CommonTermsAndConditionsItems = Vec<ChildSys>;
-pub type Data = Vec<HashMap<String, Value>>;
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Data {
+    pub items: Vec<HashMap<String, Value>>
+}
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct File {
@@ -28,7 +32,8 @@ pub enum IncludesFieldTypes {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct IncludesFields {
-    pub slug: String,
+    pub slug: Option<String>,
+    pub title: Option<String>,
     pub text: Option<String>,
     pub link: Option<String>,
     pub data: Option<Data>,
@@ -52,12 +57,10 @@ impl IntoIterator for IncludesFields {
 
     fn into_iter(self) -> Self::IntoIter {
         vec![
+            ("slug".to_string(), self.slug.map(IncludesFieldTypes::Text)),
+            ("title".to_string(), self.title.map(IncludesFieldTypes::Text)),
             ("text".to_string(), self.text.map(IncludesFieldTypes::Text)),
             ("link".to_string(), self.link.map(IncludesFieldTypes::Link)),
-            (
-                "slug".to_string(),
-                Some(IncludesFieldTypes::Slug(self.slug)),
-            ),
             ("data".to_string(), self.data.map(IncludesFieldTypes::Data)),
             (
                 "fallback_image".to_string(),

@@ -6,18 +6,23 @@ pub fn capitalize(input_string: &str) -> String {
     }
 }
 
-pub fn to_camel_case(input_string: &str)-> String {
-    input_string
-        .split("-")
-        .enumerate()
-        .map(|(i, word)| {
-            if i < 1 {
-                return word.to_string();
-            }
-            return capitalize(word);
-        })
-        .collect::<Vec<String>>()
-        .join("")
+pub fn to_camel_case(input_string: &Option<String>) -> String {
+    match input_string {
+        Some(str) => {
+            return str
+                .split("-")
+                .enumerate()
+                .map(|(i, word)| {
+                    if i < 1 {
+                        return word.to_string();
+                    }
+                    return capitalize(word);
+                })
+                .collect::<Vec<String>>()
+                .join("")
+        },
+        None => "".to_string()
+    }
 }
 
 #[cfg(test)]

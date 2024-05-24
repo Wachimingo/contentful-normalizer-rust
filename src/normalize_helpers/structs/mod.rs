@@ -20,13 +20,12 @@ pub struct ItemEntry {
     pub fields: ItemsFields,
 }
 
-pub type IncludesEntries = Vec<IncludesEntry>;
-pub type IncludesAssets = Vec<IncludesEntry>;
-
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ContentfulIncludes {
-    pub entries: IncludesEntries,
-    pub assets: IncludesAssets,
+    #[serde(rename = "Entry")]
+    pub entries: Vec<IncludesEntry>,
+    #[serde(rename = "Asset")]
+    pub assets: Vec<IncludesEntry>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
