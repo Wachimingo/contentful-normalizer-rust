@@ -15,17 +15,17 @@ pub struct ChildSys {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Space {
-    pub sys: ChildSys,
+    pub sys: ChildSysInner,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Environment {
-    pub sys: ChildSys,
+    pub sys: ChildSysInner,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ContentType {
-    pub sys: ChildSys,
+    pub sys: ChildSysInner,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

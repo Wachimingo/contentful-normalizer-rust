@@ -14,7 +14,7 @@ impl<'de> Visitor<'de> for ItemVisitor {
     type Value = Item;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("single ChildSys or multiple ChildSys")
+        formatter.write_str("Not a valid item")
     }
 
     fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
@@ -45,7 +45,7 @@ impl<'de> Deserialize<'de> for Item {
     }
 }
 
-
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum ItemsFieldTypes {
     Slug(String),
     Title(String),
@@ -57,6 +57,7 @@ pub enum ItemsFieldTypes {
 pub struct ItemsFields {
     pub slug: String,
     pub title: Option<String>,
+    pub components: Option<Item>,
     pub labels: Option<Item>,
     pub configs: Option<Item>,
     pub images: Option<Item>,
@@ -70,6 +71,7 @@ impl IntoIterator for ItemsFields {
         vec![
             ("slug".to_string(), Some(ItemsFieldTypes::Slug(self.slug))),
             ("title".to_string(), self.title.map(ItemsFieldTypes::Title)),
+            ("components".to_string(), self.components.map(ItemsFieldTypes::Item)),
             ("labels".to_string(), self.labels.map(ItemsFieldTypes::Item)),
             (
                 "configs".to_string(),
