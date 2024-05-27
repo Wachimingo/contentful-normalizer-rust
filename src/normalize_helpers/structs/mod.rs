@@ -1,3 +1,4 @@
+use common_structs::ChildSysInner;
 use serde::{Deserialize, Serialize};
 pub mod common_structs;
 pub mod includes_structs;
@@ -31,4 +32,14 @@ pub struct ContentfulIncludes {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ContentfulItems {
     pub entries: Vec<ItemEntry>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct ContentfulResponse {
+    // pub sys: ChildSysInner,
+    pub total: u8,
+    pub skip: u8,
+    pub limit: u8,
+    pub items: Vec<ItemEntry>,
+    pub includes: ContentfulIncludes,
 }
