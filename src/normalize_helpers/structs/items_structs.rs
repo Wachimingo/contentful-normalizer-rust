@@ -1,4 +1,4 @@
-use super::{common_structs::ChildSys, ItemEntry};
+use super::common_structs::ChildSys;
 use serde::{Serialize, Deserialize, Deserializer, de::{Visitor, SeqAccess, MapAccess}};
 use std::fmt;
 
@@ -50,7 +50,6 @@ pub enum ItemsFieldTypes {
     Slug(String),
     Title(String),
     Item(Item),
-    Entry(ItemEntry),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

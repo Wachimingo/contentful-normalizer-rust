@@ -1,6 +1,5 @@
 #![allow(dead_code, unused_variables, unused_mut)]
 use crate::string_helpers::to_camel_case;
-use serde_json::Value;
 use std::collections::HashMap;
 pub mod structs;
 use self::structs::{
@@ -50,33 +49,54 @@ pub fn find_and_insert(
     id: &str,
     key: &str,
     includes: &ContentfulIncludes,
-    collector: &mut HashMap<String, ParsedIncludesEntry>,
+    collector: &mut HashMap<String, Vec<ParsedIncludesEntry>>,
 ) -> () {
     if link_type == "Asset" {
         for asset in &includes.assets {
             if asset.sys.id == id {
-                let parse_asset = ParsedIncludesAssetEntry {
-                    sys: asset.sys.clone(),
-                    fields: asset.fields.clone(),
+                let parse_asset = ParsedIncludesAssetEntry {                    
+                    slug: asset.fields.slug.clone(),
+                    title: asset.fields.title.clone(),
+                    text: asset.fields.text.clone(),
+                    link: asset.fields.link.clone(),
+                    data: asset.fields.data.clone(),
+                    common_terms_and_conditions_items: asset.fields.common_terms_and_conditions_items.clone(),
+                    confirmation_text: asset.fields.confirmation_text.clone(),
+                    error_text: asset.fields.error_text.clone(),
+                    confirm_button_text: asset.fields.confirm_button_text.clone(),
                     url: asset.fields.file.as_ref().and_then(|file| file.url.clone()),
                 };
-                collector.insert(key.to_string(), ParsedIncludesEntry::Asset(parse_asset));
+                match collector.get_mut(key){
+                    Some(arr) => {
+                        arr.push(ParsedIncludesEntry::Asset(parse_asset));
+                    },
+                    None => {
+                        collector.insert(key.to_string(), vec!(ParsedIncludesEntry::Asset(parse_asset)));
+                    }
+                };
             }
         }
     } else {
         for includes_entry in &includes.entries {
-            if includes_entry.sys.id == id {
-                collector.insert(
-                    key.to_string(),
-                    ParsedIncludesEntry::Entry(includes_entry.clone()),
-                );
+            if includes_entry.sys.id == id {                
+                match collector.get_mut(key){
+                    Some(arr) => {
+                        arr.push(ParsedIncludesEntry::Entry(includes_entry.fields.clone()));
+                    },
+                    None => {
+                        collector.insert(
+                            key.to_string(),
+                            vec!(ParsedIncludesEntry::Entry(includes_entry.fields.clone())),
+                        );
+                    }
+                };
             }
         }
     }
 }
 
-pub fn parse_fields(entry: ItemEntry, includes: &ContentfulIncludes) {
-    let mut collector: HashMap<String, ParsedIncludesEntry> = HashMap::new();
+pub fn parse_fields(entry: ItemEntry, includes: &ContentfulIncludes) -> HashMap<String, Vec<ParsedIncludesEntry>> {
+    let mut collector: HashMap<String, Vec<ParsedIncludesEntry>> = HashMap::new();
     for (key, value) in entry.fields.into_iter() {
         match value {
             Some(value) => {
@@ -106,20 +126,14 @@ pub fn parse_fields(entry: ItemEntry, includes: &ContentfulIncludes) {
                                 }
                             }
                         }
-                    }
-                    ItemsFieldTypes::Entry(value) => {
-                        for includes_entry in &includes.entries {
-                            if value.sys.id == includes_entry.sys.id {
-                                parse_fields(value.clone(), &includes);
-                            }
-                        }
-                    }
+                    },
                     _ => (),
                 }
             }
             None => (),
         }
     }
+    collector
 }
 
 #[cfg(test)]
