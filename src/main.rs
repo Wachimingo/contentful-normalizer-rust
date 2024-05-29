@@ -15,5 +15,5 @@ fn main() {
     
     let parsed_file: ContentfulResponse = serde_json::from_str(&file).expect("coud not parse");
     let res = parse_fields(parsed_file.items[0].clone(), &parsed_file.includes);
-    println!("{:?}", serde_json::to_string(&res).expect("error"));
+    println!("{}", serde_json::to_string(&res).expect("error"));
 }

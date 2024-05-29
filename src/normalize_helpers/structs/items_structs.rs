@@ -55,10 +55,15 @@ pub enum ItemsFieldTypes {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ItemsFields {
     pub slug: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub components: Option<Item>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub labels: Option<Item>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub configs: Option<Item>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub images: Option<Item>,
 }
 
