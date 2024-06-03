@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use super::common_structs::ChildSys;
+use super::{common_structs::ChildSys, items_structs::Item};
 
 pub type CommonTermsAndConditionsItems = Vec<ChildSys>;
 
@@ -28,6 +28,7 @@ pub enum IncludesFieldTypes {
     ErrorText(String),
     ConfirmButtonText(String),
     File(File),
+    Item(Item),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -54,6 +55,14 @@ pub struct IncludesFields {
     pub confirm_button_text: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub file: Option<File>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub components: Option<Item>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub labels: Option<Item>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub configs: Option<Item>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub images: Option<Item>,
 }
 
 // This is the way to make an struct be able to iter as a hashmap does

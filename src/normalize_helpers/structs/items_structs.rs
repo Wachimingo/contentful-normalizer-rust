@@ -3,6 +3,7 @@ use serde::{Serialize, Deserialize, Deserializer, de::{Visitor, SeqAccess, MapAc
 use std::fmt;
 
 #[derive(Clone, Debug, Serialize)]
+#[serde(untagged)]
 pub enum Item {
     Single(ChildSys),
     Multiple(Vec<ChildSys>),
