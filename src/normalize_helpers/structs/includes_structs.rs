@@ -9,14 +9,14 @@ pub type CommonTermsAndConditionsItems = Vec<ChildSys>;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Data {
-    pub items: Vec<HashMap<String, Value>>
+    pub items: Vec<HashMap<String, Value>>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct File {
     pub url: Option<String>,
 }
-
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum IncludesFieldTypes {
     Slug(String),
     Text(String),
@@ -29,6 +29,10 @@ pub enum IncludesFieldTypes {
     ConfirmButtonText(String),
     File(File),
     Item(Item),
+    Components(Item),
+    Configs(Item),
+    Labels(Item),
+    Images(Item),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -45,7 +49,10 @@ pub struct IncludesFields {
     pub data: Option<Data>,
     #[serde(rename = "fallbackImage", skip_serializing_if = "Option::is_none")]
     pub fallback_image: Option<ChildSys>,
-    #[serde(rename = "commonTermsAndConditionsItems", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "commonTermsAndConditionsItems",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub common_terms_and_conditions_items: Option<CommonTermsAndConditionsItems>,
     #[serde(rename = "confirmationText", skip_serializing_if = "Option::is_none")]
     pub confirmation_text: Option<String>,
@@ -73,7 +80,10 @@ impl IntoIterator for IncludesFields {
     fn into_iter(self) -> Self::IntoIter {
         vec![
             ("slug".to_string(), self.slug.map(IncludesFieldTypes::Text)),
-            ("title".to_string(), self.title.map(IncludesFieldTypes::Text)),
+            (
+                "title".to_string(),
+                self.title.map(IncludesFieldTypes::Text),
+            ),
             ("text".to_string(), self.text.map(IncludesFieldTypes::Text)),
             ("link".to_string(), self.link.map(IncludesFieldTypes::Link)),
             ("data".to_string(), self.data.map(IncludesFieldTypes::Data)),
@@ -100,10 +110,22 @@ impl IntoIterator for IncludesFields {
                 self.confirm_button_text
                     .map(IncludesFieldTypes::ConfirmButtonText),
             ),
+            ("file".to_string(), self.file.map(IncludesFieldTypes::File)),
             (
-                "file".to_string(),
-                self.file
-                    .map(IncludesFieldTypes::File),
+                "components".to_string(),
+                self.components.map(IncludesFieldTypes::Item),
+            ),
+            (
+                "labels".to_string(),
+                self.labels.map(IncludesFieldTypes::Item),
+            ),
+            (
+                "configs".to_string(),
+                self.configs.map(IncludesFieldTypes::Item),
+            ),
+            (
+                "images".to_string(),
+                self.images.map(IncludesFieldTypes::Item),
             ),
         ]
         .into_iter()
