@@ -94,11 +94,6 @@ pub fn find_data(
     key: &str,
     includes: &ContentfulIncludes,
 ) -> ParsedIncludesEntryResult {
-    let components_arr = process_item(includes_entry.fields.components.clone(), key, includes);
-    let labels_arr = process_item(includes_entry.fields.labels.clone(), key, includes);
-    let configs_arr = process_item(includes_entry.fields.configs.clone(), key, includes);
-    let images_arr = process_item(includes_entry.fields.images.clone(), key, includes);
-
     let parsed_result = ParsedIncludesEntryResult {
         slug: includes_entry.fields.slug.clone(),
         title: includes_entry.fields.title.clone(),
@@ -114,10 +109,10 @@ pub fn find_data(
         error_text: includes_entry.fields.error_text.clone(),
         confirm_button_text: includes_entry.fields.confirm_button_text.clone(),
         file: None,
-        components: components_arr,
-        labels: labels_arr,
-        configs: configs_arr,
-        images: images_arr,
+        components: process_item(includes_entry.fields.components.clone(), key, includes),
+        labels: process_item(includes_entry.fields.labels.clone(), key, includes),
+        configs: process_item(includes_entry.fields.configs.clone(), key, includes),
+        images: process_item(includes_entry.fields.images.clone(), key, includes),
     };
     parsed_result
 }
