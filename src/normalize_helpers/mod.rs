@@ -1,5 +1,5 @@
 #![allow(dead_code, unused_variables, unused_mut)]
-use structs::result_structs::ParsedIncludesEntryResult;
+use structs::{result_structs::ParsedIncludesEntryResult, IncludesEntry};
 
 use crate::string_helpers::to_camel_case;
 use std::collections::HashMap;
@@ -46,6 +46,82 @@ pub fn normalize_labels(
 //     return record;
 // }
 
+pub fn process_item(
+    item: Option<Item>,
+    key: &str,
+    includes: &ContentfulIncludes,
+) -> Option<Vec<ParsedIncludesEntry>> {
+    let mut items_collector: HashMap<String, Vec<ParsedIncludesEntry>> = HashMap::new();
+    match item {
+        Some(value) => match value {
+            Item::Single(item) => {
+                find_and_insert(
+                    &item.sys.link_type,
+                    &item.sys.id,
+                    &key,
+                    &includes,
+                    &mut items_collector,
+                );
+            }
+            Item::Multiple(items) => {
+                for item in items {
+                    find_and_insert(
+                        &item.sys.link_type,
+                        &item.sys.id,
+                        &key,
+                        &includes,
+                        &mut items_collector,
+                    );
+                }
+            }
+        },
+        None => {}
+    };
+    let item_arr = items_collector
+        .values()
+        .cloned()
+        .flatten()
+        .collect::<Vec<ParsedIncludesEntry>>();
+    if item_arr.is_empty() {
+        None
+    } else {
+        Some(item_arr)
+    }
+}
+
+pub fn find_data(
+    includes_entry: &IncludesEntry,
+    key: &str,
+    includes: &ContentfulIncludes,
+) -> ParsedIncludesEntryResult {
+    let components_arr = process_item(includes_entry.fields.components.clone(), key, includes);
+    let labels_arr = process_item(includes_entry.fields.labels.clone(), key, includes);
+    let configs_arr = process_item(includes_entry.fields.configs.clone(), key, includes);
+    let images_arr = process_item(includes_entry.fields.images.clone(), key, includes);
+
+    let parsed_result = ParsedIncludesEntryResult {
+        slug: includes_entry.fields.slug.clone(),
+        title: includes_entry.fields.title.clone(),
+        text: includes_entry.fields.text.clone(),
+        link: includes_entry.fields.link.clone(),
+        data: includes_entry.fields.data.clone(),
+        fallback_image: includes_entry.fields.fallback_image.clone(),
+        common_terms_and_conditions_items: includes_entry
+            .fields
+            .common_terms_and_conditions_items
+            .clone(),
+        confirmation_text: includes_entry.fields.confirmation_text.clone(),
+        error_text: includes_entry.fields.error_text.clone(),
+        confirm_button_text: includes_entry.fields.confirm_button_text.clone(),
+        file: None,
+        components: components_arr,
+        labels: labels_arr,
+        configs: configs_arr,
+        images: images_arr,
+    };
+    parsed_result
+}
+
 pub fn find_and_insert(
     link_type: &str,
     id: &str,
@@ -89,354 +165,14 @@ pub fn find_and_insert(
             if includes_entry.sys.id == id {
                 match collector.get_mut(key) {
                     Some(arr) => {
-                        let mut components_collector: HashMap<String, Vec<ParsedIncludesEntry>> =
-                            HashMap::new();
-                        match includes_entry.fields.components.clone() {
-                            Some(value) => match value {
-                                Item::Single(item) => {
-                                    find_and_insert(
-                                        &item.sys.link_type,
-                                        &item.sys.id,
-                                        &key,
-                                        &includes,
-                                        &mut components_collector,
-                                    );
-                                }
-                                Item::Multiple(items) => {
-                                    for item in items {
-                                        find_and_insert(
-                                            &item.sys.link_type,
-                                            &item.sys.id,
-                                            &key,
-                                            &includes,
-                                            &mut components_collector,
-                                        );
-                                    }
-                                }
-                            },
-                            None => {}
-                        }
-
-                        let mut labels_collector: HashMap<String, Vec<ParsedIncludesEntry>> =
-                            HashMap::new();
-                        match includes_entry.fields.labels.clone() {
-                            Some(value) => match value {
-                                Item::Single(item) => {
-                                    find_and_insert(
-                                        &item.sys.link_type,
-                                        &item.sys.id,
-                                        &key,
-                                        &includes,
-                                        &mut labels_collector,
-                                    );
-                                }
-                                Item::Multiple(items) => {
-                                    for item in items {
-                                        find_and_insert(
-                                            &item.sys.link_type,
-                                            &item.sys.id,
-                                            &key,
-                                            &includes,
-                                            &mut labels_collector,
-                                        );
-                                    }
-                                }
-                            },
-                            None => {}
-                        }
-
-                        let mut configs_collector: HashMap<String, Vec<ParsedIncludesEntry>> =
-                            HashMap::new();
-                        match includes_entry.fields.configs.clone() {
-                            Some(value) => match value {
-                                Item::Single(item) => {
-                                    find_and_insert(
-                                        &item.sys.link_type,
-                                        &item.sys.id,
-                                        &key,
-                                        &includes,
-                                        &mut configs_collector,
-                                    );
-                                }
-                                Item::Multiple(items) => {
-                                    for item in items {
-                                        find_and_insert(
-                                            &item.sys.link_type,
-                                            &item.sys.id,
-                                            &key,
-                                            &includes,
-                                            &mut configs_collector,
-                                        );
-                                    }
-                                }
-                            },
-                            None => {}
-                        }
-
-                        let mut images_collector: HashMap<String, Vec<ParsedIncludesEntry>> =
-                            HashMap::new();
-                        match includes_entry.fields.images.clone() {
-                            Some(value) => match value {
-                                Item::Single(item) => {
-                                    find_and_insert(
-                                        &item.sys.link_type,
-                                        &item.sys.id,
-                                        &key,
-                                        &includes,
-                                        &mut images_collector,
-                                    );
-                                }
-                                Item::Multiple(items) => {
-                                    for item in items {
-                                        find_and_insert(
-                                            &item.sys.link_type,
-                                            &item.sys.id,
-                                            &key,
-                                            &includes,
-                                            &mut images_collector,
-                                        );
-                                    }
-                                }
-                            },
-                            None => {}
-                        }
-
-                        let components_arr = components_collector
-                            .values()
-                            .cloned()
-                            .flatten()
-                            .collect::<Vec<ParsedIncludesEntry>>();
-                        let labels_arr = labels_collector
-                            .values()
-                            .cloned()
-                            .flatten()
-                            .collect::<Vec<ParsedIncludesEntry>>();
-                        let configs_arr = configs_collector
-                            .values()
-                            .cloned()
-                            .flatten()
-                            .collect::<Vec<ParsedIncludesEntry>>();
-                        let images_arr = images_collector
-                            .values()
-                            .cloned()
-                            .flatten()
-                            .collect::<Vec<ParsedIncludesEntry>>();
-
-                        let parsed_result = ParsedIncludesEntryResult {
-                            slug: includes_entry.fields.slug.clone(),
-                            title: includes_entry.fields.title.clone(),
-                            text: includes_entry.fields.text.clone(),
-                            link: includes_entry.fields.link.clone(),
-                            data: includes_entry.fields.data.clone(),
-                            fallback_image: includes_entry.fields.fallback_image.clone(),
-                            common_terms_and_conditions_items: includes_entry
-                                .fields
-                                .common_terms_and_conditions_items
-                                .clone(),
-                            confirmation_text: includes_entry.fields.confirmation_text.clone(),
-                            error_text: includes_entry.fields.error_text.clone(),
-                            confirm_button_text: includes_entry.fields.confirm_button_text.clone(),
-                            file: None,
-                            components: if components_arr.is_empty() {
-                                None
-                            } else {
-                                Some(components_arr)
-                            },
-                            labels: if labels_arr.is_empty() {
-                                None
-                            } else {
-                                Some(labels_arr)
-                            },
-                            configs: if configs_arr.is_empty() {
-                                None
-                            } else {
-                                Some(configs_arr)
-                            },
-                            images: if images_arr.is_empty() {
-                                None
-                            } else {
-                                Some(images_arr)
-                            },
-                        };
-                        arr.push(ParsedIncludesEntry::ParsedIncludesEntryResult(
-                            parsed_result,
-                        ));
+                        let record = find_data(includes_entry, key, includes);
+                        arr.push(ParsedIncludesEntry::ParsedIncludesEntryResult(record));
                     }
                     None => {
-                        let mut components_collector: HashMap<String, Vec<ParsedIncludesEntry>> =
-                            HashMap::new();
-                        match includes_entry.fields.components.clone() {
-                            Some(value) => match value {
-                                Item::Single(item) => {
-                                    find_and_insert(
-                                        &item.sys.link_type,
-                                        &item.sys.id,
-                                        &key,
-                                        &includes,
-                                        &mut components_collector,
-                                    );
-                                }
-                                Item::Multiple(items) => {
-                                    for item in items {
-                                        find_and_insert(
-                                            &item.sys.link_type,
-                                            &item.sys.id,
-                                            &key,
-                                            &includes,
-                                            &mut components_collector,
-                                        );
-                                    }
-                                }
-                            },
-                            None => {}
-                        }
-
-                        let mut labels_collector: HashMap<String, Vec<ParsedIncludesEntry>> =
-                            HashMap::new();
-                        match includes_entry.fields.labels.clone() {
-                            Some(value) => match value {
-                                Item::Single(item) => {
-                                    find_and_insert(
-                                        &item.sys.link_type,
-                                        &item.sys.id,
-                                        &key,
-                                        &includes,
-                                        &mut labels_collector,
-                                    );
-                                }
-                                Item::Multiple(items) => {
-                                    for item in items {
-                                        find_and_insert(
-                                            &item.sys.link_type,
-                                            &item.sys.id,
-                                            &key,
-                                            &includes,
-                                            &mut labels_collector,
-                                        );
-                                    }
-                                }
-                            },
-                            None => {}
-                        }
-
-                        let mut configs_collector: HashMap<String, Vec<ParsedIncludesEntry>> =
-                            HashMap::new();
-                        match includes_entry.fields.configs.clone() {
-                            Some(value) => match value {
-                                Item::Single(item) => {
-                                    find_and_insert(
-                                        &item.sys.link_type,
-                                        &item.sys.id,
-                                        &key,
-                                        &includes,
-                                        &mut configs_collector,
-                                    );
-                                }
-                                Item::Multiple(items) => {
-                                    for item in items {
-                                        find_and_insert(
-                                            &item.sys.link_type,
-                                            &item.sys.id,
-                                            &key,
-                                            &includes,
-                                            &mut configs_collector,
-                                        );
-                                    }
-                                }
-                            },
-                            None => {}
-                        }
-
-                        let mut images_collector: HashMap<String, Vec<ParsedIncludesEntry>> =
-                            HashMap::new();
-                        match includes_entry.fields.images.clone() {
-                            Some(value) => match value {
-                                Item::Single(item) => {
-                                    find_and_insert(
-                                        &item.sys.link_type,
-                                        &item.sys.id,
-                                        &key,
-                                        &includes,
-                                        &mut images_collector,
-                                    );
-                                }
-                                Item::Multiple(items) => {
-                                    for item in items {
-                                        find_and_insert(
-                                            &item.sys.link_type,
-                                            &item.sys.id,
-                                            &key,
-                                            &includes,
-                                            &mut images_collector,
-                                        );
-                                    }
-                                }
-                            },
-                            None => {}
-                        }
-
-                        let components_arr = components_collector
-                            .values()
-                            .cloned()
-                            .flatten()
-                            .collect::<Vec<ParsedIncludesEntry>>();
-                        let labels_arr = labels_collector
-                            .values()
-                            .cloned()
-                            .flatten()
-                            .collect::<Vec<ParsedIncludesEntry>>();
-                        let configs_arr = configs_collector
-                            .values()
-                            .cloned()
-                            .flatten()
-                            .collect::<Vec<ParsedIncludesEntry>>();
-                        let images_arr = images_collector
-                            .values()
-                            .cloned()
-                            .flatten()
-                            .collect::<Vec<ParsedIncludesEntry>>();
-
-                        let parsed_result = ParsedIncludesEntryResult {
-                            slug: includes_entry.fields.slug.clone(),
-                            title: includes_entry.fields.title.clone(),
-                            text: includes_entry.fields.text.clone(),
-                            link: includes_entry.fields.link.clone(),
-                            data: includes_entry.fields.data.clone(),
-                            fallback_image: includes_entry.fields.fallback_image.clone(),
-                            common_terms_and_conditions_items: includes_entry
-                                .fields
-                                .common_terms_and_conditions_items
-                                .clone(),
-                            confirmation_text: includes_entry.fields.confirmation_text.clone(),
-                            error_text: includes_entry.fields.error_text.clone(),
-                            confirm_button_text: includes_entry.fields.confirm_button_text.clone(),
-                            file: None,
-                            components: if components_arr.is_empty() {
-                                None
-                            } else {
-                                Some(components_arr)
-                            },
-                            labels: if labels_arr.is_empty() {
-                                None
-                            } else {
-                                Some(labels_arr)
-                            },
-                            configs: if configs_arr.is_empty() {
-                                None
-                            } else {
-                                Some(configs_arr)
-                            },
-                            images: if images_arr.is_empty() {
-                                None
-                            } else {
-                                Some(images_arr)
-                            },
-                        };
+                        let record = find_data(includes_entry, key, includes);
                         collector.insert(
                             key.to_string(),
-                            vec![ParsedIncludesEntry::ParsedIncludesEntryResult(
-                                parsed_result,
-                            )],
+                            vec![ParsedIncludesEntry::ParsedIncludesEntryResult(record)],
                         );
                     }
                 };
