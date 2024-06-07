@@ -48,8 +48,7 @@ impl<'de> Deserialize<'de> for Item {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum ItemsFieldTypes {
-    Slug(String),
-    Title(String),
+    Text(String),
     Item(Item),
 }
 
@@ -74,8 +73,8 @@ impl IntoIterator for ItemsFields {
 
     fn into_iter(self) -> Self::IntoIter {
         vec![
-            ("slug".to_string(), Some(ItemsFieldTypes::Slug(self.slug))),
-            ("title".to_string(), self.title.map(ItemsFieldTypes::Title)),
+            ("slug".to_string(), Some(ItemsFieldTypes::Text(self.slug))),
+            ("title".to_string(), self.title.map(ItemsFieldTypes::Text)),
             ("components".to_string(), self.components.map(ItemsFieldTypes::Item)),
             ("labels".to_string(), self.labels.map(ItemsFieldTypes::Item)),
             (

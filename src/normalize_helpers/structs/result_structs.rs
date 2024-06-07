@@ -33,8 +33,8 @@ pub struct ParsedIncludesAssetEntry {
 #[derive(Clone, Debug, Deserialize)]
 pub enum ParsedIncludesEntry {
     Asset(ParsedIncludesAssetEntry),
-    Entry(IncludesFields),
-    ParsedIncludesEntryResult(ParsedIncludesEntryResult),
+    Entry(ParsedIncludesEntryResult),
+    Text(String),
 }
 
 impl Serialize for ParsedIncludesEntry {
@@ -45,7 +45,7 @@ impl Serialize for ParsedIncludesEntry {
         match self {
             ParsedIncludesEntry::Asset(asset) => asset.serialize(serializer),
             ParsedIncludesEntry::Entry(entry) => entry.serialize(serializer),
-            ParsedIncludesEntry::ParsedIncludesEntryResult(item) => item.serialize(serializer),
+            ParsedIncludesEntry::Text(entry) => entry.serialize(serializer),
         }
     }
 }
@@ -85,4 +85,18 @@ pub struct ParsedIncludesEntryResult {
     pub configs: Option<Vec<ParsedIncludesEntry>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub images: Option<Vec<ParsedIncludesEntry>>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct ParsedFieldsResult {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub title: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub slug: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub components: Option<Vec<ParsedIncludesEntry>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub labels: Option<Vec<ParsedIncludesEntry>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub configs: Option<Vec<ParsedIncludesEntry>>,
 }

@@ -1,12 +1,12 @@
 #![allow(dead_code, unused_variables, unused_mut)]
-use structs::{includes_structs::Data, result_structs::ParsedIncludesEntryResult, IncludesEntry};
+use structs::{includes_structs::Data, result_structs::{ParsedFieldsResult, ParsedIncludesEntryResult}, IncludesEntry};
 
 use crate::string_helpers::to_camel_case;
 use std::collections::HashMap;
 pub mod structs;
 use self::structs::{
     common_structs::ContentfulEntity,
-    items_structs::{Item, ItemsFieldTypes},
+    items_structs::Item,
     result_structs::{ParsedIncludesAssetEntry, ParsedIncludesEntry},
     ContentfulIncludes, ItemEntry,
 };
@@ -161,13 +161,13 @@ pub fn find_and_insert(
                 match collector.get_mut(key) {
                     Some(arr) => {
                         let record = find_data(includes_entry, key, includes);
-                        arr.push(ParsedIncludesEntry::ParsedIncludesEntryResult(record));
+                        arr.push(ParsedIncludesEntry::Entry(record));
                     }
                     None => {
                         let record = find_data(includes_entry, key, includes);
                         collector.insert(
                             key.to_string(),
-                            vec![ParsedIncludesEntry::ParsedIncludesEntryResult(record)],
+                            vec![ParsedIncludesEntry::Entry(record)],
                         );
                     }
                 };
@@ -180,45 +180,14 @@ pub fn find_and_insert(
 pub fn parse_fields(
     entry: ItemEntry,
     includes: &ContentfulIncludes,
-) -> HashMap<String, Vec<ParsedIncludesEntry>> {
-    let mut collector: HashMap<String, Vec<ParsedIncludesEntry>> = HashMap::new();
-    for (key, value) in entry.fields.into_iter() {
-        match value {
-            Some(value) => {
-                match value {
-                    ItemsFieldTypes::Item(value) => {
-                        // if item field entry is component, image or config
-                        match value {
-                            Item::Single(value) => {
-                                // if value is an object or array
-                                find_and_insert(
-                                    &value.sys.link_type,
-                                    &value.sys.id,
-                                    &key,
-                                    &includes,
-                                    &mut collector,
-                                );
-                            }
-                            Item::Multiple(value) => {
-                                for value_item in value {
-                                    find_and_insert(
-                                        &value_item.sys.link_type,
-                                        &value_item.sys.id,
-                                        &key,
-                                        &includes,
-                                        &mut collector,
-                                    );
-                                }
-                            }
-                        }
-                    }
-                    _ => (),
-                }
-            }
-            None => (),
-        }
+) -> ParsedFieldsResult {
+    ParsedFieldsResult {                    
+        title: entry.fields.title,
+        slug: Some(entry.fields.slug),
+        components: process_item(entry.fields.components.clone(), "components", includes),
+        labels: process_item(entry.fields.labels.clone(), "labels", includes),
+        configs: process_item(entry.fields.configs.clone(), "configs", includes),
     }
-    collector
 }
 
 #[cfg(test)]
