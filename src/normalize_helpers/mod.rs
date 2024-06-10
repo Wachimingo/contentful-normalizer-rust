@@ -1,5 +1,9 @@
 #![allow(dead_code, unused_variables, unused_mut)]
-use structs::{includes_structs::Data, result_structs::{ParsedFieldsResult, ParsedIncludesEntryResult}, IncludesEntry};
+use structs::{
+    includes_structs::Data,
+    result_structs::{ParsedFieldsResult, ParsedIncludesEntryResult},
+    IncludesEntry,
+};
 
 use crate::string_helpers::to_camel_case;
 use std::collections::HashMap;
@@ -97,14 +101,19 @@ pub fn find_data(
     let parsed_result = ParsedIncludesEntryResult {
         slug: includes_entry.fields.slug.clone(),
         title: includes_entry.fields.title.clone(),
+        entry_title: includes_entry.fields.entry_title.clone(),
         text: includes_entry.fields.text.clone(),
         link: includes_entry.fields.link.clone(),
         data: includes_entry.fields.data.clone(),
-        fallback_image: includes_entry.fields.fallback_image.clone(),
-        common_terms_and_conditions_items: includes_entry
-            .fields
-            .common_terms_and_conditions_items
-            .clone(),
+        fallback_image: process_item(includes_entry.fields.fallback_image.clone(), key, includes),
+        common_terms_and_conditions_items: process_item(
+            includes_entry
+                .fields
+                .common_terms_and_conditions_items
+                .clone(),
+            key,
+            includes,
+        ),
         confirmation_text: includes_entry.fields.confirmation_text.clone(),
         error_text: includes_entry.fields.error_text.clone(),
         confirm_button_text: includes_entry.fields.confirm_button_text.clone(),
@@ -141,6 +150,7 @@ pub fn find_and_insert(
                     error_text: asset.fields.error_text.clone(),
                     confirm_button_text: asset.fields.confirm_button_text.clone(),
                     url: asset.fields.file.as_ref().and_then(|file| file.url.clone()),
+                    file: asset.fields.file.clone(),
                 };
                 match collector.get_mut(key) {
                     Some(arr) => {
@@ -165,10 +175,7 @@ pub fn find_and_insert(
                     }
                     None => {
                         let record = find_data(includes_entry, key, includes);
-                        collector.insert(
-                            key.to_string(),
-                            vec![ParsedIncludesEntry::Entry(record)],
-                        );
+                        collector.insert(key.to_string(), vec![ParsedIncludesEntry::Entry(record)]);
                     }
                 };
             }
@@ -177,11 +184,8 @@ pub fn find_and_insert(
     collector.clone()
 }
 
-pub fn parse_fields(
-    entry: ItemEntry,
-    includes: &ContentfulIncludes,
-) -> ParsedFieldsResult {
-    ParsedFieldsResult {                    
+pub fn parse_fields(entry: ItemEntry, includes: &ContentfulIncludes) -> ParsedFieldsResult {
+    ParsedFieldsResult {
         title: entry.fields.title,
         slug: Some(entry.fields.slug),
         components: process_item(entry.fields.components.clone(), "components", includes),

@@ -1,11 +1,9 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{Number, Value};
 
 use super::{common_structs::ChildSys, items_structs::Item};
-
-pub type CommonTermsAndConditionsItems = Vec<ChildSys>;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Data {
@@ -13,9 +11,29 @@ pub struct Data {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct File {
-    pub url: Option<String>,
+pub struct FileDetailsImage {
+    pub width: Number,
+    pub height: Number,
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct FileDetails {
+    pub size: Number,
+    pub image: FileDetailsImage,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct File {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub details: Option<FileDetails>,
+    #[serde(rename = "fileName", skip_serializing_if = "Option::is_none")]
+    pub file_name: Option<String>,
+    #[serde(rename = "contentType", skip_serializing_if = "Option::is_none")]
+    pub content_type: Option<String>,
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum IncludesFieldTypes {
     Slug(String),
@@ -23,7 +41,7 @@ pub enum IncludesFieldTypes {
     Link(String),
     Data(Data),
     FallbackImage(ChildSys),
-    CommonTermsAndConditionsItems(CommonTermsAndConditionsItems),
+    CommonTermsAndConditionsItems(Item),
     ConfirmationText(String),
     ErrorText(String),
     ConfirmButtonText(String),
@@ -41,6 +59,8 @@ pub struct IncludesFields {
     pub slug: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
+    #[serde(rename = "entryTitle", skip_serializing_if = "Option::is_none")]
+    pub entry_title: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub text: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -48,12 +68,12 @@ pub struct IncludesFields {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<Data>,
     #[serde(rename = "fallbackImage", skip_serializing_if = "Option::is_none")]
-    pub fallback_image: Option<ChildSys>,
+    pub fallback_image: Option<Item>,
     #[serde(
         rename = "commonTermsAndConditionsItems",
         skip_serializing_if = "Option::is_none"
     )]
-    pub common_terms_and_conditions_items: Option<CommonTermsAndConditionsItems>,
+    pub common_terms_and_conditions_items: Option<Item>,
     #[serde(rename = "confirmationText", skip_serializing_if = "Option::is_none")]
     pub confirmation_text: Option<String>,
     #[serde(rename = "errorText", skip_serializing_if = "Option::is_none")]
@@ -84,12 +104,16 @@ impl IntoIterator for IncludesFields {
                 "title".to_string(),
                 self.title.map(IncludesFieldTypes::Text),
             ),
+            (
+                "entryTitle".to_string(),
+                self.entry_title.map(IncludesFieldTypes::Text),
+            ),
             ("text".to_string(), self.text.map(IncludesFieldTypes::Text)),
             ("link".to_string(), self.link.map(IncludesFieldTypes::Link)),
             ("data".to_string(), self.data.map(IncludesFieldTypes::Data)),
             (
                 "fallback_image".to_string(),
-                self.fallback_image.map(IncludesFieldTypes::FallbackImage),
+                self.fallback_image.map(IncludesFieldTypes::Item),
             ),
             (
                 "common_terms_and_conditions_items".to_string(),

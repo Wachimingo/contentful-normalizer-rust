@@ -1,6 +1,6 @@
 use super::*;
-use common_structs::ChildSys;
-use includes_structs::{CommonTermsAndConditionsItems, Data, File};
+use includes_structs::{Data, File};
+use items_structs::Item;
 use serde::{Deserialize, Serialize, Serializer};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -19,7 +19,7 @@ pub struct ParsedIncludesAssetEntry {
         rename = "commonTermsAndConditionsItems",
         skip_serializing_if = "Option::is_none"
     )]
-    pub common_terms_and_conditions_items: Option<CommonTermsAndConditionsItems>,
+    pub common_terms_and_conditions_items: Option<Item>,
     #[serde(rename = "confirmationText", skip_serializing_if = "Option::is_none")]
     pub confirmation_text: Option<String>,
     #[serde(rename = "errorText", skip_serializing_if = "Option::is_none")]
@@ -28,6 +28,8 @@ pub struct ParsedIncludesAssetEntry {
     pub confirm_button_text: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub file: Option<File>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -56,6 +58,8 @@ pub struct ParsedIncludesEntryResult {
     pub slug: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
+    #[serde(rename = "entryTitle", skip_serializing_if = "Option::is_none")]
+    pub entry_title: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub text: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -63,12 +67,12 @@ pub struct ParsedIncludesEntryResult {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<Data>,
     #[serde(rename = "fallbackImage", skip_serializing_if = "Option::is_none")]
-    pub fallback_image: Option<ChildSys>,
+    pub fallback_image: Option<Vec<ParsedIncludesEntry>>,
     #[serde(
         rename = "commonTermsAndConditionsItems",
         skip_serializing_if = "Option::is_none"
     )]
-    pub common_terms_and_conditions_items: Option<CommonTermsAndConditionsItems>,
+    pub common_terms_and_conditions_items: Option<Vec<ParsedIncludesEntry>>,
     #[serde(rename = "confirmationText", skip_serializing_if = "Option::is_none")]
     pub confirmation_text: Option<String>,
     #[serde(rename = "errorText", skip_serializing_if = "Option::is_none")]
