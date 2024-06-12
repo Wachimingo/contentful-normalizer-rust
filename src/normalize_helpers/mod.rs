@@ -1,8 +1,8 @@
 #![allow(dead_code, unused_variables, unused_mut)]
 use structs::{
     includes_structs::Data,
-    result_structs::{ParsedFieldsResult, ParsedIncludesEntryResult},
-    IncludesEntry,
+    result_structs::{NormalizeResponseResult, ParsedFieldsResult, ParsedIncludesEntryResult},
+    ContentfulResponse, IncludesEntry,
 };
 
 use crate::string_helpers::to_camel_case;
@@ -13,68 +13,6 @@ use self::structs::{
     result_structs::{ParsedIncludesAssetEntry, ParsedIncludesEntry},
     ContentfulIncludes,
 };
-
-pub fn normalize_labels(
-    labels: Item,
-    includes: ContentfulIncludes,
-) -> HashMap<String, String> {
-    let mut record: HashMap<String, String> = HashMap::new();
-    match labels {
-        Item::Single(label)=> {
-            for entry in &includes.entries {
-                if label.sys.id == entry.sys.id {
-                    if let Some(ref text) = entry.fields.text {
-                        record.insert(to_camel_case(&entry.fields.slug), text.clone());
-                    }
-                }
-            }
-        },
-        Item::Multiple(labels) => {
-            for label in labels {
-                for entry in &includes.entries {
-                    if label.sys.id == entry.sys.id {
-                        if let Some(ref text) = entry.fields.text {
-                            record.insert(to_camel_case(&entry.fields.slug), text.clone());
-                        }
-                    }
-                }
-            }
-        },
-    }
-    return record;
-}
-
-pub fn normalize_configs(
-    configs: Item,
-    includes: ContentfulIncludes,
-) -> HashMap<String, Data> {
-    let mut record: HashMap<String, Data> = HashMap::new();
-    match configs {
-        Item::Single(config) => {
-            for entry in &includes.entries {
-                if config.sys.id == entry.sys.id {
-                    // This way allows for coping the struct values, compared to match statement where data couldn't be moved
-                    if let Some(ref data) = entry.fields.data {
-                        record.insert(to_camel_case(&entry.fields.slug), data.clone());
-                    }
-                }
-            }
-        },
-        Item::Multiple(configs) => {
-            for config in configs {
-                for entry in &includes.entries {
-                    if config.sys.id == entry.sys.id {
-                        // This way allows for coping the struct values, compared to match statement where data couldn't be moved
-                        if let Some(ref data) = entry.fields.data {
-                            record.insert(to_camel_case(&entry.fields.slug), data.clone());
-                        }
-                    }
-                }
-            }
-        },
-    }
-    return record;
-}
 
 pub fn process_item(
     item: Option<Item>,
@@ -221,31 +159,115 @@ pub fn parse_fields(entry: IncludesEntry, includes: &ContentfulIncludes) -> Pars
     }
 }
 
-pub fn normalize_components(components: Item, includes: ContentfulIncludes)->HashMap<String, ParsedFieldsResult>{
-    let mut record: HashMap<String, ParsedFieldsResult> = HashMap::new();
-    match components {
-        Item::Single(component)=> {
+pub fn normalize_labels(labels: Item, includes: ContentfulIncludes) -> HashMap<String, String> {
+    let mut record: HashMap<String, String> = HashMap::new();
+    match labels {
+        Item::Single(label) => {
             for entry in &includes.entries {
-                if component.sys.id == entry.sys.id {
-                    if let Some(ref components) = entry.fields.components {
-                        record.insert(to_camel_case(&entry.fields.slug), parse_fields(entry.clone(), &includes));
+                if label.sys.id == entry.sys.id {
+                    if let Some(ref text) = entry.fields.text {
+                        record.insert(to_camel_case(&entry.fields.slug), text.clone());
                     }
                 }
             }
-        },
-        Item::Multiple(components) => {
-            for component in components {
+        }
+        Item::Multiple(labels) => {
+            for label in labels {
                 for entry in &includes.entries {
-                    if component.sys.id == entry.sys.id {
-                        if let Some(ref components) = entry.fields.components {
-                            record.insert(to_camel_case(&entry.fields.slug), parse_fields(entry.clone(), &includes));
+                    if label.sys.id == entry.sys.id {
+                        if let Some(ref text) = entry.fields.text {
+                            record.insert(to_camel_case(&entry.fields.slug), text.clone());
                         }
                     }
                 }
             }
-        },
+        }
     }
     return record;
+}
+
+pub fn normalize_configs(configs: Item, includes: ContentfulIncludes) -> HashMap<String, Data> {
+    let mut record: HashMap<String, Data> = HashMap::new();
+    match configs {
+        Item::Single(config) => {
+            for entry in &includes.entries {
+                if config.sys.id == entry.sys.id {
+                    // This way allows for coping the struct values, compared to match statement where data couldn't be moved
+                    if let Some(ref data) = entry.fields.data {
+                        record.insert(to_camel_case(&entry.fields.slug), data.clone());
+                    }
+                }
+            }
+        }
+        Item::Multiple(configs) => {
+            for config in configs {
+                for entry in &includes.entries {
+                    if config.sys.id == entry.sys.id {
+                        // This way allows for coping the struct values, compared to match statement where data couldn't be moved
+                        if let Some(ref data) = entry.fields.data {
+                            record.insert(to_camel_case(&entry.fields.slug), data.clone());
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return record;
+}
+
+pub fn normalize_components(
+    components: Option<Item>,
+    includes: ContentfulIncludes,
+) -> HashMap<String, Option<Vec<ParsedIncludesEntry>>> {
+    let mut record: HashMap<String, Option<Vec<ParsedIncludesEntry>>> = HashMap::new();
+    match components {
+        Some(components) => {
+            match components {
+                Item::Single(component) => {
+                    let entry = includes.entries.clone().into_iter().find(|entry| entry.sys.id == component.sys.id).unwrap();
+                    record.insert(
+                        to_camel_case(&entry.fields.slug),
+                        process_item(Some(Item::Single(component)), "components", &includes)
+                    );
+                },
+                Item::Multiple(components) => {
+                    for component in components {
+                        let entry = includes.entries.clone().into_iter().find(|entry| entry.sys.id == component.sys.id).unwrap();
+                        record.insert(
+                            to_camel_case(&entry.fields.slug),
+                            process_item(Some(Item::Single(component)), "components", &includes)
+                        );
+                    };
+                }
+            }
+        },
+        None => {},
+    }    
+    return record;
+}
+
+pub fn normalize_response(response: ContentfulResponse, slug: String) -> NormalizeResponseResult {
+    let main_page_entry = response
+        .items
+        .clone()
+        .into_iter()
+        .find(|item| item.fields.slug == slug)
+        .unwrap();
+    NormalizeResponseResult {
+        slug: Some(main_page_entry.fields.slug),
+        labels: Some(normalize_labels(
+            main_page_entry.fields.labels.unwrap(),
+            response.includes.clone(),
+        )),
+        configs: Some(normalize_configs(
+            main_page_entry.fields.configs.unwrap(),
+            response.includes.clone(),
+        )),
+        components: Some(normalize_components(
+            main_page_entry.fields.components,
+            response.includes.clone(),
+        )),
+    }
 }
 
 #[cfg(test)]

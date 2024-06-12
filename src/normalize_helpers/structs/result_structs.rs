@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use super::*;
 use includes_structs::{Data, File};
 use items_structs::Item;
@@ -103,4 +105,18 @@ pub struct ParsedFieldsResult {
     pub labels: Option<Vec<ParsedIncludesEntry>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub configs: Option<Vec<ParsedIncludesEntry>>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NormalizeResponseResult {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub slug: Option<String>,
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    // pub seo: Option<Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub labels: Option<HashMap<String, String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub configs: Option<HashMap<String, Data>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub components: Option<HashMap<String, Option<Vec<ParsedIncludesEntry>>>>,
 }

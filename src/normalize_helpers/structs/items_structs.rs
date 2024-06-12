@@ -55,6 +55,8 @@ pub enum ItemsFieldTypes {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ItemsFields {
     pub slug: String,
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    // pub seo: Option<serde_json::Map<String, Value>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]

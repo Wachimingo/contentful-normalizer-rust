@@ -1,7 +1,7 @@
 use std::fs;
 
 use clap::Parser;
-use rust_contentful_normalizer::normalize_helpers::{parse_fields, structs::ContentfulResponse};
+use rust_contentful_normalizer::normalize_helpers::{normalize_response, structs::ContentfulResponse};
 
 #[derive(Parser, Default)]
 struct CLI {
@@ -14,6 +14,6 @@ fn main() {
     let file = fs::read_to_string(args.file_path).expect("Error reading file");
     
     let parsed_file: ContentfulResponse = serde_json::from_str(&file).expect("coud not parse");
-    let res = parse_fields(parsed_file.items[0].clone(), &parsed_file.includes);
+    let res = normalize_response(parsed_file, "product-subscription-overview-main-page".to_string());
     println!("{}", serde_json::to_string(&res).expect("error"));
 }
