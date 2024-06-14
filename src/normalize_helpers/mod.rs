@@ -1,4 +1,3 @@
-#![allow(dead_code, unused_variables, unused_mut)]
 use structs::{
     includes_structs::Data,
     result_structs::{NormalizeResponseResult, ParsedFieldsResult, ParsedIncludesEntryResult},
@@ -18,7 +17,7 @@ pub fn process_item(
     item: Option<Item>,
     key: &str,
     includes: &ContentfulIncludes,
-) -> Option<Vec<ParsedIncludesEntry>> {
+) -> Option<Vec<ParsedIncludesEntry>> {    
     let mut items_collector: HashMap<String, Vec<ParsedIncludesEntry>> = HashMap::new();
     match item {
         Some(value) => match value {
@@ -86,7 +85,7 @@ pub fn find_data(
         labels: process_item(includes_entry.fields.labels.clone(), key, includes),
         configs: process_item(includes_entry.fields.configs.clone(), key, includes),
         images: process_item(includes_entry.fields.images.clone(), key, includes),
-    };
+    };    
     parsed_result
 }
 
@@ -148,7 +147,6 @@ pub fn find_and_insert(
     collector.clone()
 }
 
-// pub fn parse_fields(entry: ItemEntry, includes: &ContentfulIncludes) -> ParsedFieldsResult {
 pub fn parse_fields(entry: IncludesEntry, includes: &ContentfulIncludes) -> ParsedFieldsResult {
     ParsedFieldsResult {
         title: entry.fields.title,
