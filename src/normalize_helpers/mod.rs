@@ -97,23 +97,32 @@ pub fn find_and_insert(
     collector: &mut HashMap<String, Vec<ParsedIncludesEntry>>,
 ) -> HashMap<String, Vec<ParsedIncludesEntry>> {
     if link_type == "Asset" {
-        for asset in &includes.assets {
-            if asset.sys.id == id {
+        let found_includes_entry = &includes
+            .entries
+            .clone()
+            .into_iter()
+            .find(|entry| entry.sys.id == id);
+        match found_includes_entry {
+            Some(found_includes_entry) => {
                 let parse_asset = ParsedIncludesAssetEntry {
-                    slug: asset.fields.slug.clone(),
-                    title: asset.fields.title.clone(),
-                    text: asset.fields.text.clone(),
-                    link: asset.fields.link.clone(),
-                    data: asset.fields.data.clone(),
-                    common_terms_and_conditions_items: asset
+                    slug: found_includes_entry.fields.slug.clone(),
+                    title: found_includes_entry.fields.title.clone(),
+                    text: found_includes_entry.fields.text.clone(),
+                    link: found_includes_entry.fields.link.clone(),
+                    data: found_includes_entry.fields.data.clone(),
+                    common_terms_and_conditions_items: found_includes_entry
                         .fields
                         .common_terms_and_conditions_items
                         .clone(),
-                    confirmation_text: asset.fields.confirmation_text.clone(),
-                    error_text: asset.fields.error_text.clone(),
-                    confirm_button_text: asset.fields.confirm_button_text.clone(),
-                    url: asset.fields.file.as_ref().and_then(|file| file.url.clone()),
-                    file: asset.fields.file.clone(),
+                    confirmation_text: found_includes_entry.fields.confirmation_text.clone(),
+                    error_text: found_includes_entry.fields.error_text.clone(),
+                    confirm_button_text: found_includes_entry.fields.confirm_button_text.clone(),
+                    url: found_includes_entry
+                        .fields
+                        .file
+                        .as_ref()
+                        .and_then(|file| file.url.clone()),
+                    file: found_includes_entry.fields.file.clone(),
                 };
                 match collector.get_mut(key) {
                     Some(arr) => {
@@ -127,21 +136,28 @@ pub fn find_and_insert(
                     }
                 };
             }
+            None => {}
         }
     } else {
-        for includes_entry in &includes.entries {
-            if includes_entry.sys.id == id {
+        let found_includes_entry = &includes
+            .entries
+            .clone()
+            .into_iter()
+            .find(|entry| entry.sys.id == id);
+        match found_includes_entry {
+            Some(found_includes_entry) => {
                 match collector.get_mut(key) {
                     Some(arr) => {
-                        let record = find_data(includes_entry, key, includes);
+                        let record = find_data(found_includes_entry, key, includes);
                         arr.push(ParsedIncludesEntry::Entry(record));
                     }
                     None => {
-                        let record = find_data(includes_entry, key, includes);
+                        let record = find_data(found_includes_entry, key, includes);
                         collector.insert(key.to_string(), vec![ParsedIncludesEntry::Entry(record)]);
                     }
                 };
             }
+            None => {}
         }
     }
     collector.clone()
@@ -192,7 +208,10 @@ pub fn normalize_labels(
     }
 }
 
-pub fn normalize_configs(configs: Option<Item>, includes: ContentfulIncludes) -> HashMap<String, Data> {
+pub fn normalize_configs(
+    configs: Option<Item>,
+    includes: ContentfulIncludes,
+) -> HashMap<String, Data> {
     let mut record: HashMap<String, Data> = HashMap::new();
     match configs {
         Some(configs) => {
@@ -221,8 +240,8 @@ pub fn normalize_configs(configs: Option<Item>, includes: ContentfulIncludes) ->
                 }
             }
             record
-        },
-        None => record
+        }
+        None => record,
     }
 }
 
@@ -304,7 +323,7 @@ pub fn normalize_response(response: ContentfulResponse, slug: String) -> Normali
             labels: None,
             configs: None,
             components: None,
-        }
+        },
     }
 }
 
