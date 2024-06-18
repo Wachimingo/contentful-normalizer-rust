@@ -17,7 +17,7 @@ pub fn process_item(
     item: Option<Item>,
     key: &str,
     includes: &ContentfulIncludes,
-) -> Option<Vec<ParsedIncludesEntry>> {    
+) -> Option<Vec<ParsedIncludesEntry>> {
     let mut items_collector: HashMap<String, Vec<ParsedIncludesEntry>> = HashMap::new();
     match item {
         Some(value) => match value {
@@ -85,7 +85,7 @@ pub fn find_data(
         labels: process_item(includes_entry.fields.labels.clone(), key, includes),
         configs: process_item(includes_entry.fields.configs.clone(), key, includes),
         images: process_item(includes_entry.fields.images.clone(), key, includes),
-    };    
+    };
     parsed_result
 }
 
@@ -157,60 +157,73 @@ pub fn parse_fields(entry: IncludesEntry, includes: &ContentfulIncludes) -> Pars
     }
 }
 
-pub fn normalize_labels(labels: Item, includes: ContentfulIncludes) -> HashMap<String, String> {
+pub fn normalize_labels(
+    labels: Option<Item>,
+    includes: ContentfulIncludes,
+) -> HashMap<String, String> {
     let mut record: HashMap<String, String> = HashMap::new();
     match labels {
-        Item::Single(label) => {
-            for entry in &includes.entries {
-                if label.sys.id == entry.sys.id {
-                    if let Some(ref text) = entry.fields.text {
-                        record.insert(to_camel_case(&entry.fields.slug), text.clone());
+        Some(labels) => {
+            match labels {
+                Item::Single(label) => {
+                    for entry in &includes.entries {
+                        if label.sys.id == entry.sys.id {
+                            if let Some(ref text) = entry.fields.text {
+                                record.insert(to_camel_case(&entry.fields.slug), text.clone());
+                            }
+                        }
                     }
                 }
-            }
-        }
-        Item::Multiple(labels) => {
-            for label in labels {
-                for entry in &includes.entries {
-                    if label.sys.id == entry.sys.id {
-                        if let Some(ref text) = entry.fields.text {
-                            record.insert(to_camel_case(&entry.fields.slug), text.clone());
+                Item::Multiple(labels) => {
+                    for label in labels {
+                        for entry in &includes.entries {
+                            if label.sys.id == entry.sys.id {
+                                if let Some(ref text) = entry.fields.text {
+                                    record.insert(to_camel_case(&entry.fields.slug), text.clone());
+                                }
+                            }
                         }
                     }
                 }
             }
+            record
         }
+        None => record,
     }
-    return record;
 }
 
-pub fn normalize_configs(configs: Item, includes: ContentfulIncludes) -> HashMap<String, Data> {
+pub fn normalize_configs(configs: Option<Item>, includes: ContentfulIncludes) -> HashMap<String, Data> {
     let mut record: HashMap<String, Data> = HashMap::new();
     match configs {
-        Item::Single(config) => {
-            for entry in &includes.entries {
-                if config.sys.id == entry.sys.id {
-                    // This way allows for coping the struct values, compared to match statement where data couldn't be moved
-                    if let Some(ref data) = entry.fields.data {
-                        record.insert(to_camel_case(&entry.fields.slug), data.clone());
+        Some(configs) => {
+            match configs {
+                Item::Single(config) => {
+                    for entry in &includes.entries {
+                        if config.sys.id == entry.sys.id {
+                            // This way allows for coping the struct values, compared to match statement where data couldn't be moved
+                            if let Some(ref data) = entry.fields.data {
+                                record.insert(to_camel_case(&entry.fields.slug), data.clone());
+                            }
+                        }
                     }
                 }
-            }
-        }
-        Item::Multiple(configs) => {
-            for config in configs {
-                for entry in &includes.entries {
-                    if config.sys.id == entry.sys.id {
-                        // This way allows for coping the struct values, compared to match statement where data couldn't be moved
-                        if let Some(ref data) = entry.fields.data {
-                            record.insert(to_camel_case(&entry.fields.slug), data.clone());
+                Item::Multiple(configs) => {
+                    for config in configs {
+                        for entry in &includes.entries {
+                            if config.sys.id == entry.sys.id {
+                                // This way allows for coping the struct values, compared to match statement where data couldn't be moved
+                                if let Some(ref data) = entry.fields.data {
+                                    record.insert(to_camel_case(&entry.fields.slug), data.clone());
+                                }
+                            }
                         }
                     }
                 }
             }
-        }
+            record
+        },
+        None => record
     }
-    return record;
 }
 
 pub fn normalize_components(
@@ -219,28 +232,48 @@ pub fn normalize_components(
 ) -> HashMap<String, Option<Vec<ParsedIncludesEntry>>> {
     let mut record: HashMap<String, Option<Vec<ParsedIncludesEntry>>> = HashMap::new();
     match components {
-        Some(components) => {
-            match components {
-                Item::Single(component) => {
-                    let entry = includes.entries.clone().into_iter().find(|entry| entry.sys.id == component.sys.id).unwrap();
-                    record.insert(
-                        to_camel_case(&entry.fields.slug),
-                        process_item(Some(Item::Single(component)), "components", &includes)
-                    );
-                },
-                Item::Multiple(components) => {
-                    for component in components {
-                        let entry = includes.entries.clone().into_iter().find(|entry| entry.sys.id == component.sys.id).unwrap();
+        Some(components) => match components {
+            Item::Single(component) => {
+                let entry = includes
+                    .entries
+                    .clone()
+                    .into_iter()
+                    .find(|entry| entry.sys.id == component.sys.id);
+                match entry {
+                    Some(entry) => {
                         record.insert(
                             to_camel_case(&entry.fields.slug),
-                            process_item(Some(Item::Single(component)), "components", &includes)
+                            process_item(Some(Item::Single(component)), "components", &includes),
                         );
-                    };
+                    }
+                    None => {}
+                }
+            }
+            Item::Multiple(components) => {
+                for component in components {
+                    let entry = includes
+                        .entries
+                        .clone()
+                        .into_iter()
+                        .find(|entry| entry.sys.id == component.sys.id);
+                    match entry {
+                        Some(entry) => {
+                            record.insert(
+                                to_camel_case(&entry.fields.slug),
+                                process_item(
+                                    Some(Item::Single(component)),
+                                    "components",
+                                    &includes,
+                                ),
+                            );
+                        }
+                        None => {}
+                    }
                 }
             }
         },
-        None => {},
-    }    
+        None => {}
+    }
     return record;
 }
 
@@ -249,22 +282,29 @@ pub fn normalize_response(response: ContentfulResponse, slug: String) -> Normali
         .items
         .clone()
         .into_iter()
-        .find(|item| item.fields.slug == slug)
-        .unwrap();
-    NormalizeResponseResult {
-        slug: Some(main_page_entry.fields.slug),
-        labels: Some(normalize_labels(
-            main_page_entry.fields.labels.unwrap(),
-            response.includes.clone(),
-        )),
-        configs: Some(normalize_configs(
-            main_page_entry.fields.configs.unwrap(),
-            response.includes.clone(),
-        )),
-        components: Some(normalize_components(
-            main_page_entry.fields.components,
-            response.includes.clone(),
-        )),
+        .find(|item| item.fields.slug == slug);
+    match main_page_entry {
+        Some(main_page_entry) => NormalizeResponseResult {
+            slug: Some(main_page_entry.fields.slug),
+            labels: Some(normalize_labels(
+                main_page_entry.fields.labels,
+                response.includes.clone(),
+            )),
+            configs: Some(normalize_configs(
+                main_page_entry.fields.configs,
+                response.includes.clone(),
+            )),
+            components: Some(normalize_components(
+                main_page_entry.fields.components,
+                response.includes.clone(),
+            )),
+        },
+        None => NormalizeResponseResult {
+            slug: None,
+            labels: None,
+            configs: None,
+            components: None,
+        }
     }
 }
 
