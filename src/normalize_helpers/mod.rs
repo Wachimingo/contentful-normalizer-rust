@@ -1,5 +1,5 @@
 use structs::{
-    includes_structs::Data, items_structs::ItemRef, result_structs::{NormalizeResponseResult, ParsedFieldsResult, ParsedIncludesEntryResult}, ContentfulResponse, IncludesEntry
+    includes_structs::Data, items_structs::{ItemRef, SingleMultiple}, result_structs::{NormalizeResponseResult, ParsedFieldsResult, ParsedIncludesEntryResult}, ContentfulResponse, IncludesEntry
 };
 
 use crate::string_helpers::to_camel_case;
@@ -11,25 +11,16 @@ use self::structs::{
     ContentfulIncludes,
 };
 
-pub fn process_ref_item(
-    item: Option<ItemRef>,
+pub fn process_ref_item<T:SingleMultiple>(
+    item: Option<T>,
     key: &str,
     includes: &ContentfulIncludes,
 ) -> Option<Vec<ParsedIncludesEntry>> {
     let mut items_collector: HashMap<String, Vec<ParsedIncludesEntry>> = HashMap::new();
     match item {
-        Some(value) => match value {
-            ItemRef::Single(item) => {
-                find_and_insert(
-                    &item.sys.link_type,
-                    &item.sys.id,
-                    &key,
-                    &includes,
-                    &mut items_collector,
-                );
-            }
-            ItemRef::Multiple(items) => {
-                for item in items {
+        Some(item) => {
+            match item.single() {
+                Some(item) => {
                     find_and_insert(
                         &item.sys.link_type,
                         &item.sys.id,
@@ -37,11 +28,26 @@ pub fn process_ref_item(
                         &includes,
                         &mut items_collector,
                     );
-                }
-            }
+                },
+                None => {}
+            };
+            match item.multiple() {
+                Some(items) => {
+                    for item in items {
+                        find_and_insert(
+                            &item.sys.link_type,
+                            &item.sys.id,
+                            &key,
+                            &includes,
+                            &mut items_collector,
+                        );
+                    }
+                },
+                None => {}
+            };
         },
-        None => {}
-    };
+        None => {},
+    }
     let item_arr = items_collector
         .values()
         .cloned()
@@ -51,7 +57,7 @@ pub fn process_ref_item(
         None
     } else {
         Some(item_arr)
-    }
+    } 
 }
 
 pub fn process_item(
@@ -109,7 +115,7 @@ pub fn find_data(
         text: includes_entry.fields.text.clone(),
         link: includes_entry.fields.link.clone(),
         data: includes_entry.fields.data.clone(),
-        fallback_image: process_item(&includes_entry.fields.fallback_image, key, includes),
+        fallback_image: process_ref_item(&includes_entry.fields.fallback_image, key, includes),
         common_terms_and_conditions_items: process_item(
             &includes_entry
                 .fields

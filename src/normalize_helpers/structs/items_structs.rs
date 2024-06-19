@@ -13,6 +13,31 @@ pub enum ItemRef<'a,'b> {
     Multiple(Vec<& 'b ChildSys>),
 }
 
+pub trait SingleMultiple {
+    type SingleType;
+    type MultipleType;
+    fn single(&self) -> Option<&ChildSys>;
+    fn multiple(&self) -> Option<&Vec<&ChildSys>>;
+}
+
+impl<'a,'b> SingleMultiple for ItemRef<'a,'b> {
+    type SingleType = & 'a ChildSys;
+    type MultipleType = Vec<& 'b ChildSys>;
+
+    fn single(&self) -> Option<&ChildSys> {
+        match self {
+            Self::Single(single) => Some(single),
+            _ => None
+        }        
+    }
+    fn multiple(&self) -> Option<&Vec<&ChildSys>> {
+        match self {
+            Self::Multiple(multiple) => Some(multiple),
+            _ => None
+        } 
+    }
+}
+
 struct ItemVisitor;
 
 impl<'de> Visitor<'de> for ItemVisitor {

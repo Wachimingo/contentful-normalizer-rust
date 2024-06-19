@@ -8,10 +8,29 @@ pub struct ChildSysInner {
     #[serde(rename = "type")]
     pub object_type: String,
 }
+
+// impl ChildSysInner {
+//     pub fn get_id(&self) -> String {
+//         self.id
+//     }
+//     pub fn get_link_type(&self) -> String {
+//         self.link_type
+//     }
+//     pub fn get_object_type(&self) -> String {
+//         self.object_type
+//     }
+// }
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ChildSys {
     pub sys: ChildSysInner
 }
+
+// impl ChildSys {
+//     pub fn get_sys(&self) -> ChildSysInner {
+//         self.sys
+//     }
+// }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Space {
