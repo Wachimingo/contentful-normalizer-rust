@@ -8,6 +8,10 @@ pub enum Item {
     Single(ChildSys),
     Multiple(Vec<ChildSys>),
 }
+pub enum ItemRef<'a,'b> {
+    Single(& 'a ChildSys),
+    Multiple(Vec<& 'b ChildSys>),
+}
 
 struct ItemVisitor;
 

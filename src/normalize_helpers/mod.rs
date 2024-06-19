@@ -1,7 +1,5 @@
 use structs::{
-    includes_structs::Data,
-    result_structs::{NormalizeResponseResult, ParsedFieldsResult, ParsedIncludesEntryResult},
-    ContentfulResponse, IncludesEntry,
+    includes_structs::Data, items_structs::ItemRef, result_structs::{NormalizeResponseResult, ParsedFieldsResult, ParsedIncludesEntryResult}, ContentfulResponse, IncludesEntry
 };
 
 use crate::string_helpers::to_camel_case;
@@ -12,6 +10,49 @@ use self::structs::{
     result_structs::{ParsedIncludesAssetEntry, ParsedIncludesEntry},
     ContentfulIncludes,
 };
+
+pub fn process_ref_item(
+    item: Option<ItemRef>,
+    key: &str,
+    includes: &ContentfulIncludes,
+) -> Option<Vec<ParsedIncludesEntry>> {
+    let mut items_collector: HashMap<String, Vec<ParsedIncludesEntry>> = HashMap::new();
+    match item {
+        Some(value) => match value {
+            ItemRef::Single(item) => {
+                find_and_insert(
+                    &item.sys.link_type,
+                    &item.sys.id,
+                    &key,
+                    &includes,
+                    &mut items_collector,
+                );
+            }
+            ItemRef::Multiple(items) => {
+                for item in items {
+                    find_and_insert(
+                        &item.sys.link_type,
+                        &item.sys.id,
+                        &key,
+                        &includes,
+                        &mut items_collector,
+                    );
+                }
+            }
+        },
+        None => {}
+    };
+    let item_arr = items_collector
+        .values()
+        .cloned()
+        .flatten()
+        .collect::<Vec<ParsedIncludesEntry>>();
+    if item_arr.is_empty() {
+        None
+    } else {
+        Some(item_arr)
+    }
+}
 
 pub fn process_item(
     item: &Option<Item>,
@@ -302,7 +343,7 @@ pub fn normalize_components(
                     Some(entry) => {
                         record.insert(
                             to_camel_case(entry.fields.slug.clone()),
-                            process_item(&Some(Item::Single(component.clone())), "components", &includes),
+                            process_ref_item(Some(ItemRef::Single(component)), "components", &includes),
                         );
                     }
                     None => {}
@@ -318,8 +359,8 @@ pub fn normalize_components(
                         Some(entry) => {
                             record.insert(
                                 to_camel_case(entry.fields.slug.clone()),
-                                process_item(
-                                    &Some(Item::Single(component.clone())),
+                                process_ref_item(
+                                    Some(ItemRef::Single(component)),
                                     "components",
                                     &includes,
                                 ),
