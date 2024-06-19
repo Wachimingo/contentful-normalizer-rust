@@ -14,7 +14,7 @@ use self::structs::{
 };
 
 pub fn process_item(
-    item: Option<Item>,
+    item: &Option<Item>,
     key: &str,
     includes: &ContentfulIncludes,
 ) -> Option<Vec<ParsedIncludesEntry>> {
@@ -68,12 +68,11 @@ pub fn find_data(
         text: includes_entry.fields.text.clone(),
         link: includes_entry.fields.link.clone(),
         data: includes_entry.fields.data.clone(),
-        fallback_image: process_item(includes_entry.fields.fallback_image.clone(), key, includes),
+        fallback_image: process_item(&includes_entry.fields.fallback_image, key, includes),
         common_terms_and_conditions_items: process_item(
-            includes_entry
+            &includes_entry
                 .fields
-                .common_terms_and_conditions_items
-                .clone(),
+                .common_terms_and_conditions_items,
             key,
             includes,
         ),
@@ -81,10 +80,10 @@ pub fn find_data(
         error_text: includes_entry.fields.error_text.clone(),
         confirm_button_text: includes_entry.fields.confirm_button_text.clone(),
         file: None,
-        components: process_item(includes_entry.fields.components.clone(), key, includes),
-        labels: process_item(includes_entry.fields.labels.clone(), key, includes),
-        configs: process_item(includes_entry.fields.configs.clone(), key, includes),
-        images: process_item(includes_entry.fields.images.clone(), key, includes),
+        components: process_item(&includes_entry.fields.components, key, includes),
+        labels: process_item(&includes_entry.fields.labels, key, includes),
+        configs: process_item(&includes_entry.fields.configs, key, includes),
+        images: process_item(&includes_entry.fields.images, key, includes),
     };
     parsed_result
 }
@@ -167,37 +166,59 @@ pub fn parse_fields(entry: IncludesEntry, includes: &ContentfulIncludes) -> Pars
     ParsedFieldsResult {
         title: entry.fields.title,
         slug: entry.fields.slug,
-        components: process_item(entry.fields.components.clone(), "components", includes),
-        labels: process_item(entry.fields.labels.clone(), "labels", includes),
-        configs: process_item(entry.fields.configs.clone(), "configs", includes),
+        components: process_item(&entry.fields.components, "components", includes),
+        labels: process_item(&entry.fields.labels, "labels", includes),
+        configs: process_item(&entry.fields.configs, "configs", includes),
     }
 }
 
 pub fn normalize_labels(
-    labels: Option<Item>,
-    includes: ContentfulIncludes,
+    labels: &Option<Item>,
+    includes: &ContentfulIncludes,
 ) -> HashMap<String, String> {
     let mut record: HashMap<String, String> = HashMap::new();
     match labels {
         Some(labels) => {
             match labels {
                 Item::Single(label) => {
-                    for entry in &includes.entries {
-                        if label.sys.id == entry.sys.id {
-                            if let Some(ref text) = entry.fields.text {
-                                record.insert(to_camel_case(&entry.fields.slug), text.clone());
+                    let found_includes_entry = includes
+                        .entries
+                        .iter()
+                        .find(|entry| entry.sys.id == label.sys.id);
+                    match found_includes_entry {
+                        Some(found_includes_entry) => {
+                            match &found_includes_entry.fields.text {
+                                Some(text) => {
+                                    record.insert(
+                                        to_camel_case(found_includes_entry.fields.slug.clone()),
+                                        text.clone(),
+                                    );
+                                }
+                                None => {}
                             }
-                        }
+                        },
+                        None => {}
                     }
                 }
                 Item::Multiple(labels) => {
                     for label in labels {
-                        for entry in &includes.entries {
-                            if label.sys.id == entry.sys.id {
-                                if let Some(ref text) = entry.fields.text {
-                                    record.insert(to_camel_case(&entry.fields.slug), text.clone());
+                        let found_includes_entry = includes
+                            .entries
+                            .iter()
+                            .find(|entry| entry.sys.id == label.sys.id);
+                        match found_includes_entry {
+                            Some(found_includes_entry) => {
+                                match &found_includes_entry.fields.text {
+                                    Some(text) => {
+                                        record.insert(
+                                            to_camel_case(found_includes_entry.fields.slug.clone()),
+                                            text.clone(),
+                                        );
+                                    }
+                                    None => {}
                                 }
-                            }
+                            },
+                            None => {}
                         }
                     }
                 }
@@ -209,32 +230,52 @@ pub fn normalize_labels(
 }
 
 pub fn normalize_configs(
-    configs: Option<Item>,
-    includes: ContentfulIncludes,
+    configs: &Option<Item>,
+    includes: &ContentfulIncludes,
 ) -> HashMap<String, Data> {
     let mut record: HashMap<String, Data> = HashMap::new();
     match configs {
         Some(configs) => {
             match configs {
                 Item::Single(config) => {
-                    for entry in &includes.entries {
-                        if config.sys.id == entry.sys.id {
-                            // This way allows for coping the struct values, compared to match statement where data couldn't be moved
-                            if let Some(ref data) = entry.fields.data {
-                                record.insert(to_camel_case(&entry.fields.slug), data.clone());
+                    let found_includes_entry = includes
+                        .entries
+                        .iter()
+                        .find(|entry| entry.sys.id == config.sys.id);
+                    match found_includes_entry {
+                        Some(found_includes_entry) => {
+                            match &found_includes_entry.fields.data {
+                                Some(data) => {
+                                    record.insert(
+                                        to_camel_case(found_includes_entry.fields.slug.clone()),
+                                        data.clone(),
+                                    );
+                                }
+                                None => {}
                             }
-                        }
+                        },
+                        None => {}
                     }
                 }
                 Item::Multiple(configs) => {
                     for config in configs {
-                        for entry in &includes.entries {
-                            if config.sys.id == entry.sys.id {
-                                // This way allows for coping the struct values, compared to match statement where data couldn't be moved
-                                if let Some(ref data) = entry.fields.data {
-                                    record.insert(to_camel_case(&entry.fields.slug), data.clone());
+                        let found_includes_entry = includes
+                            .entries
+                            .iter()
+                            .find(|entry| entry.sys.id == config.sys.id);
+                        match found_includes_entry {
+                            Some(found_includes_entry) => {
+                                match &found_includes_entry.fields.data {
+                                    Some(data) => {
+                                        record.insert(
+                                            to_camel_case(found_includes_entry.fields.slug.clone()),
+                                            data.clone(),
+                                        );
+                                    }
+                                    None => {}
                                 }
-                            }
+                            },
+                            None => {}
                         }
                     }
                 }
@@ -246,8 +287,8 @@ pub fn normalize_configs(
 }
 
 pub fn normalize_components(
-    components: Option<Item>,
-    includes: ContentfulIncludes,
+    components: &Option<Item>,
+    includes: &ContentfulIncludes,
 ) -> HashMap<String, Option<Vec<ParsedIncludesEntry>>> {
     let mut record: HashMap<String, Option<Vec<ParsedIncludesEntry>>> = HashMap::new();
     match components {
@@ -255,14 +296,13 @@ pub fn normalize_components(
             Item::Single(component) => {
                 let entry = includes
                     .entries
-                    .clone()
-                    .into_iter()
+                    .iter()
                     .find(|entry| entry.sys.id == component.sys.id);
                 match entry {
                     Some(entry) => {
                         record.insert(
-                            to_camel_case(&entry.fields.slug),
-                            process_item(Some(Item::Single(component)), "components", &includes),
+                            to_camel_case(entry.fields.slug.clone()),
+                            process_item(&Some(Item::Single(component.clone())), "components", &includes),
                         );
                     }
                     None => {}
@@ -272,15 +312,14 @@ pub fn normalize_components(
                 for component in components {
                     let entry = includes
                         .entries
-                        .clone()
-                        .into_iter()
+                        .iter()
                         .find(|entry| entry.sys.id == component.sys.id);
                     match entry {
                         Some(entry) => {
                             record.insert(
-                                to_camel_case(&entry.fields.slug),
+                                to_camel_case(entry.fields.slug.clone()),
                                 process_item(
-                                    Some(Item::Single(component)),
+                                    &Some(Item::Single(component.clone())),
                                     "components",
                                     &includes,
                                 ),
@@ -299,23 +338,22 @@ pub fn normalize_components(
 pub fn normalize_response(response: ContentfulResponse, slug: String) -> NormalizeResponseResult {
     let main_page_entry = response
         .items
-        .clone()
-        .into_iter()
+        .iter()
         .find(|item| item.fields.slug == slug);
     match main_page_entry {
         Some(main_page_entry) => NormalizeResponseResult {
-            slug: Some(main_page_entry.fields.slug),
+            slug: Some(main_page_entry.fields.slug.clone()),
             labels: Some(normalize_labels(
-                main_page_entry.fields.labels,
-                response.includes.clone(),
+                &main_page_entry.fields.labels,
+                &response.includes,
             )),
             configs: Some(normalize_configs(
-                main_page_entry.fields.configs,
-                response.includes.clone(),
+                &main_page_entry.fields.configs,
+                &response.includes,
             )),
             components: Some(normalize_components(
-                main_page_entry.fields.components,
-                response.includes.clone(),
+                &main_page_entry.fields.components,
+                &response.includes,
             )),
         },
         None => NormalizeResponseResult {
