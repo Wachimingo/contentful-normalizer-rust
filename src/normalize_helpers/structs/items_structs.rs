@@ -1,5 +1,8 @@
 use super::common_structs::ChildSys;
-use serde::{Serialize, Deserialize, Deserializer, de::{Visitor, SeqAccess, MapAccess}};
+use serde::{
+    de::{MapAccess, SeqAccess, Visitor},
+    Deserialize, Deserializer, Serialize,
+};
 use std::fmt;
 
 #[derive(Clone, Debug, Serialize)]
@@ -8,33 +11,75 @@ pub enum Item {
     Single(ChildSys),
     Multiple(Vec<ChildSys>),
 }
-pub enum ItemRef<'a,'b> {
-    Single(& 'a ChildSys),
-    Multiple(Vec<& 'b ChildSys>),
+pub enum ItemRef<'a> {
+    Single(&'a ChildSys),
+    Multiple(&'a Vec<ChildSys>),
 }
 
-pub trait SingleMultiple {
+pub trait SingleMultiple<'a, U, V> {
     type SingleType;
     type MultipleType;
-    fn single(&self) -> Option<&ChildSys>;
-    fn multiple(&self) -> Option<&Vec<&ChildSys>>;
+    fn single(&'a self) -> Option<U>;
+    fn multiple(&'a self) -> Option<V>;
 }
 
-impl<'a,'b> SingleMultiple for ItemRef<'a,'b> {
-    type SingleType = & 'a ChildSys;
-    type MultipleType = Vec<& 'b ChildSys>;
+impl<'a> SingleMultiple<'a, ChildSys, &'a Vec<ChildSys>> for Item {
+    type SingleType = ChildSys;
+    type MultipleType = Vec<ChildSys>;
 
-    fn single(&self) -> Option<&ChildSys> {
-        match self {
-            Self::Single(single) => Some(single),
-            _ => None
-        }        
+    fn single(&self) -> Option<Self::SingleType> {
+        match self {            
+            Self::Single(single) => Some(single.clone()),
+            _ => None,
+        }
     }
-    fn multiple(&self) -> Option<&Vec<&ChildSys>> {
+    fn multiple(&'a self) -> Option<&Self::MultipleType> {
         match self {
             Self::Multiple(multiple) => Some(multiple),
-            _ => None
-        } 
+            _ => None,
+        }
+    }
+}
+
+impl<'a> SingleMultiple<'a, &'a ChildSys, Vec<& 'a ChildSys>> for Item {
+    type SingleType = &'a ChildSys;
+    type MultipleType = Vec<& 'a ChildSys>;
+
+    fn single(&'a self) -> Option<Self::SingleType> {
+        match self {            
+            Self::Single(single) => Some(single),
+            _ => None,
+        }
+    }
+    fn multiple(&'a self) -> Option<Self::MultipleType> {
+        match self {
+            Self::Multiple(multiple) => {
+                let mut new_vec: Vec<&ChildSys> = Vec::new();
+                for child_sys in multiple {
+                    new_vec.push(child_sys)
+                }
+                Some(new_vec)
+            },
+            _ => None,
+        }
+    }
+}
+
+impl<'a> SingleMultiple<'a, &'a ChildSys, &'a Vec<ChildSys>> for ItemRef<'a> {
+    type SingleType = &'a ChildSys;
+    type MultipleType = &'a Vec<ChildSys>;
+
+    fn single(&self) -> Option<Self::SingleType> {
+        match self {
+            Self::Single(single) => Some(single),
+            _ => None,
+        }
+    }
+    fn multiple(&self) -> Option<Self::MultipleType> {
+        match self {
+            Self::Multiple(multiple) => Some(multiple),
+            _ => None,
+        }
     }
 }
 
@@ -62,7 +107,9 @@ impl<'de> Visitor<'de> for ItemVisitor {
     where
         A: MapAccess<'de>,
     {
-        Ok(Item::Single(Deserialize::deserialize(serde::de::value::MapAccessDeserializer::new(map))?))
+        Ok(Item::Single(Deserialize::deserialize(
+            serde::de::value::MapAccessDeserializer::new(map),
+        )?))
     }
 }
 
@@ -106,7 +153,10 @@ impl IntoIterator for ItemsFields {
         vec![
             ("slug".to_string(), Some(ItemsFieldTypes::Text(self.slug))),
             ("title".to_string(), self.title.map(ItemsFieldTypes::Text)),
-            ("components".to_string(), self.components.map(ItemsFieldTypes::Item)),
+            (
+                "components".to_string(),
+                self.components.map(ItemsFieldTypes::Item),
+            ),
             ("labels".to_string(), self.labels.map(ItemsFieldTypes::Item)),
             (
                 "configs".to_string(),

@@ -1,5 +1,9 @@
 use structs::{
-    includes_structs::Data, items_structs::{ItemRef, SingleMultiple}, result_structs::{NormalizeResponseResult, ParsedFieldsResult, ParsedIncludesEntryResult}, ContentfulResponse, IncludesEntry
+    common_structs::{ChildSys, SysField},
+    includes_structs::Data,
+    items_structs::{ItemRef, SingleMultiple},
+    result_structs::{NormalizeResponseResult, ParsedFieldsResult, ParsedIncludesEntryResult},
+    ContentfulResponse, IncludesEntry,
 };
 
 use crate::string_helpers::to_camel_case;
@@ -11,8 +15,8 @@ use self::structs::{
     ContentfulIncludes,
 };
 
-pub fn process_ref_item<T:SingleMultiple>(
-    item: Option<T>,
+pub fn process_item<'a, U: SysField, V: IntoIterator<Item = U> + 'a, T: SingleMultiple<'a, U, V> + 'a>(
+    item: &'a Option<T>,
     key: &str,
     includes: &ContentfulIncludes,
 ) -> Option<Vec<ParsedIncludesEntry>> {
@@ -22,75 +26,32 @@ pub fn process_ref_item<T:SingleMultiple>(
             match item.single() {
                 Some(item) => {
                     find_and_insert(
-                        &item.sys.link_type,
-                        &item.sys.id,
+                        &item.link_type(),
+                        &item.id(),
                         &key,
                         &includes,
                         &mut items_collector,
                     );
-                },
+                }
                 None => {}
             };
             match item.multiple() {
                 Some(items) => {
                     for item in items {
                         find_and_insert(
-                            &item.sys.link_type,
-                            &item.sys.id,
+                            &item.link_type(),
+                            &item.id(),
                             &key,
                             &includes,
                             &mut items_collector,
                         );
                     }
-                },
+                }
                 None => {}
             };
-        },
-        None => {},
-    }
-    let item_arr = items_collector
-        .values()
-        .cloned()
-        .flatten()
-        .collect::<Vec<ParsedIncludesEntry>>();
-    if item_arr.is_empty() {
-        None
-    } else {
-        Some(item_arr)
-    } 
-}
-
-pub fn process_item(
-    item: &Option<Item>,
-    key: &str,
-    includes: &ContentfulIncludes,
-) -> Option<Vec<ParsedIncludesEntry>> {
-    let mut items_collector: HashMap<String, Vec<ParsedIncludesEntry>> = HashMap::new();
-    match item {
-        Some(value) => match value {
-            Item::Single(item) => {
-                find_and_insert(
-                    &item.sys.link_type,
-                    &item.sys.id,
-                    &key,
-                    &includes,
-                    &mut items_collector,
-                );
-            }
-            Item::Multiple(items) => {
-                for item in items {
-                    find_and_insert(
-                        &item.sys.link_type,
-                        &item.sys.id,
-                        &key,
-                        &includes,
-                        &mut items_collector,
-                    );
-                }
-            }
-        },
+        }
         None => {}
-    };
+    }
     let item_arr = items_collector
         .values()
         .cloned()
@@ -115,11 +76,9 @@ pub fn find_data(
         text: includes_entry.fields.text.clone(),
         link: includes_entry.fields.link.clone(),
         data: includes_entry.fields.data.clone(),
-        fallback_image: process_ref_item(&includes_entry.fields.fallback_image, key, includes),
-        common_terms_and_conditions_items: process_item(
-            &includes_entry
-                .fields
-                .common_terms_and_conditions_items,
+        fallback_image: process_item::<&ChildSys, Vec<&ChildSys>, Item>(&includes_entry.fields.fallback_image, key, includes),
+        common_terms_and_conditions_items: process_item::<&ChildSys, Vec<&ChildSys>, Item>(
+            &includes_entry.fields.common_terms_and_conditions_items.clone(),
             key,
             includes,
         ),
@@ -127,10 +86,10 @@ pub fn find_data(
         error_text: includes_entry.fields.error_text.clone(),
         confirm_button_text: includes_entry.fields.confirm_button_text.clone(),
         file: None,
-        components: process_item(&includes_entry.fields.components, key, includes),
-        labels: process_item(&includes_entry.fields.labels, key, includes),
-        configs: process_item(&includes_entry.fields.configs, key, includes),
-        images: process_item(&includes_entry.fields.images, key, includes),
+        components: process_item::<&ChildSys, Vec<&ChildSys>, Item>(&includes_entry.fields.components.clone(), key, includes),
+        labels: process_item::<&ChildSys, Vec<&ChildSys>, Item>(&includes_entry.fields.labels.clone(), key, includes),
+        configs: process_item::<&ChildSys, Vec<&ChildSys>, Item>(&includes_entry.fields.configs.clone(), key, includes),
+        images: process_item::<&ChildSys, Vec<&ChildSys>, Item>(&includes_entry.fields.images.clone(), key, includes),
     };
     parsed_result
 }
@@ -213,9 +172,9 @@ pub fn parse_fields(entry: IncludesEntry, includes: &ContentfulIncludes) -> Pars
     ParsedFieldsResult {
         title: entry.fields.title,
         slug: entry.fields.slug,
-        components: process_item(&entry.fields.components, "components", includes),
-        labels: process_item(&entry.fields.labels, "labels", includes),
-        configs: process_item(&entry.fields.configs, "configs", includes),
+        components: process_item::<&ChildSys, Vec<&ChildSys>, Item>(&entry.fields.components, "components", includes),
+        labels: process_item::<&ChildSys, Vec<&ChildSys>, Item>(&entry.fields.labels, "labels", includes),
+        configs: process_item::<&ChildSys, Vec<&ChildSys>, Item>(&entry.fields.configs, "configs", includes),
     }
 }
 
@@ -233,16 +192,14 @@ pub fn normalize_labels(
                         .iter()
                         .find(|entry| entry.sys.id == label.sys.id);
                     match found_includes_entry {
-                        Some(found_includes_entry) => {
-                            match &found_includes_entry.fields.text {
-                                Some(text) => {
-                                    record.insert(
-                                        to_camel_case(found_includes_entry.fields.slug.clone()),
-                                        text.clone(),
-                                    );
-                                }
-                                None => {}
+                        Some(found_includes_entry) => match &found_includes_entry.fields.text {
+                            Some(text) => {
+                                record.insert(
+                                    to_camel_case(found_includes_entry.fields.slug.clone()),
+                                    text.clone(),
+                                );
                             }
+                            None => {}
                         },
                         None => {}
                     }
@@ -254,16 +211,14 @@ pub fn normalize_labels(
                             .iter()
                             .find(|entry| entry.sys.id == label.sys.id);
                         match found_includes_entry {
-                            Some(found_includes_entry) => {
-                                match &found_includes_entry.fields.text {
-                                    Some(text) => {
-                                        record.insert(
-                                            to_camel_case(found_includes_entry.fields.slug.clone()),
-                                            text.clone(),
-                                        );
-                                    }
-                                    None => {}
+                            Some(found_includes_entry) => match &found_includes_entry.fields.text {
+                                Some(text) => {
+                                    record.insert(
+                                        to_camel_case(found_includes_entry.fields.slug.clone()),
+                                        text.clone(),
+                                    );
                                 }
+                                None => {}
                             },
                             None => {}
                         }
@@ -290,16 +245,14 @@ pub fn normalize_configs(
                         .iter()
                         .find(|entry| entry.sys.id == config.sys.id);
                     match found_includes_entry {
-                        Some(found_includes_entry) => {
-                            match &found_includes_entry.fields.data {
-                                Some(data) => {
-                                    record.insert(
-                                        to_camel_case(found_includes_entry.fields.slug.clone()),
-                                        data.clone(),
-                                    );
-                                }
-                                None => {}
+                        Some(found_includes_entry) => match &found_includes_entry.fields.data {
+                            Some(data) => {
+                                record.insert(
+                                    to_camel_case(found_includes_entry.fields.slug.clone()),
+                                    data.clone(),
+                                );
                             }
+                            None => {}
                         },
                         None => {}
                     }
@@ -311,16 +264,14 @@ pub fn normalize_configs(
                             .iter()
                             .find(|entry| entry.sys.id == config.sys.id);
                         match found_includes_entry {
-                            Some(found_includes_entry) => {
-                                match &found_includes_entry.fields.data {
-                                    Some(data) => {
-                                        record.insert(
-                                            to_camel_case(found_includes_entry.fields.slug.clone()),
-                                            data.clone(),
-                                        );
-                                    }
-                                    None => {}
+                            Some(found_includes_entry) => match &found_includes_entry.fields.data {
+                                Some(data) => {
+                                    record.insert(
+                                        to_camel_case(found_includes_entry.fields.slug.clone()),
+                                        data.clone(),
+                                    );
                                 }
+                                None => {}
                             },
                             None => {}
                         }
@@ -349,7 +300,7 @@ pub fn normalize_components(
                     Some(entry) => {
                         record.insert(
                             to_camel_case(entry.fields.slug.clone()),
-                            process_ref_item(Some(ItemRef::Single(component)), "components", &includes),
+                            process_item::<&ChildSys, &Vec<ChildSys>, ItemRef>(&Some(ItemRef::Single(component)), "components", &includes),
                         );
                     }
                     None => {}
@@ -365,11 +316,7 @@ pub fn normalize_components(
                         Some(entry) => {
                             record.insert(
                                 to_camel_case(entry.fields.slug.clone()),
-                                process_ref_item(
-                                    Some(ItemRef::Single(component)),
-                                    "components",
-                                    &includes,
-                                ),
+                                process_item::<&ChildSys, &Vec<ChildSys>, ItemRef>(&Some(ItemRef::Single(component)), "components", &includes),
                             );
                         }
                         None => {}
@@ -383,10 +330,7 @@ pub fn normalize_components(
 }
 
 pub fn normalize_response(response: ContentfulResponse, slug: String) -> NormalizeResponseResult {
-    let main_page_entry = response
-        .items
-        .iter()
-        .find(|item| item.fields.slug == slug);
+    let main_page_entry = response.items.iter().find(|item| item.fields.slug == slug);
     match main_page_entry {
         Some(main_page_entry) => NormalizeResponseResult {
             slug: Some(main_page_entry.fields.slug.clone()),
