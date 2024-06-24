@@ -104,8 +104,7 @@ pub fn find_and_insert(
     if link_type == "Asset" {
         let found_includes_entry = &includes
             .entries
-            .clone()
-            .into_iter()
+            .iter()
             .find(|entry| entry.sys.id == id);
         match found_includes_entry {
             Some(found_includes_entry) => {
@@ -146,8 +145,7 @@ pub fn find_and_insert(
     } else {
         let found_includes_entry = &includes
             .entries
-            .clone()
-            .into_iter()
+            .iter()
             .find(|entry| entry.sys.id == id);
         match found_includes_entry {
             Some(found_includes_entry) => {
