@@ -94,13 +94,13 @@ pub fn find_data(
     parsed_result
 }
 
-pub fn find_and_insert(
+pub fn find_and_insert<'vec>(
     link_type: &str,
     id: &str,
     key: &str,
     includes: &ContentfulIncludes,
-    collector: &mut HashMap<String, Vec<ParsedIncludesEntry>>,
-) -> HashMap<String, Vec<ParsedIncludesEntry>> {
+    collector: &'vec mut HashMap<String, Vec<ParsedIncludesEntry>>,
+) -> &'vec HashMap<String, Vec<ParsedIncludesEntry>> {
     if link_type == "Asset" {
         let found_includes_entry = &includes
             .entries
@@ -163,7 +163,7 @@ pub fn find_and_insert(
             None => {}
         }
     }
-    collector.clone()
+    collector
 }
 
 pub fn parse_fields(entry: IncludesEntry, includes: &ContentfulIncludes) -> ParsedFieldsResult {
@@ -193,7 +193,7 @@ pub fn normalize_labels(
                         Some(found_includes_entry) => match &found_includes_entry.fields.text {
                             Some(text) => {
                                 record.insert(
-                                    to_camel_case(found_includes_entry.fields.slug.clone()),
+                                    to_camel_case(found_includes_entry.fields.slug.as_ref()),
                                     text.clone(),
                                 );
                             }
@@ -212,7 +212,7 @@ pub fn normalize_labels(
                             Some(found_includes_entry) => match &found_includes_entry.fields.text {
                                 Some(text) => {
                                     record.insert(
-                                        to_camel_case(found_includes_entry.fields.slug.clone()),
+                                        to_camel_case(found_includes_entry.fields.slug.as_ref()),
                                         text.clone(),
                                     );
                                 }
@@ -229,11 +229,11 @@ pub fn normalize_labels(
     }
 }
 
-pub fn normalize_configs(
+pub fn normalize_configs<'data>(
     configs: &Option<Item>,
-    includes: &ContentfulIncludes,
-) -> HashMap<String, Data> {
-    let mut record: HashMap<String, Data> = HashMap::new();
+    includes: &'data ContentfulIncludes,
+) -> HashMap<String, &'data Data> {
+    let mut record: HashMap<String, &Data> = HashMap::new();
     match configs {
         Some(configs) => {
             match configs {
@@ -246,8 +246,8 @@ pub fn normalize_configs(
                         Some(found_includes_entry) => match &found_includes_entry.fields.data {
                             Some(data) => {
                                 record.insert(
-                                    to_camel_case(found_includes_entry.fields.slug.clone()),
-                                    data.clone(),
+                                    to_camel_case(found_includes_entry.fields.slug.as_ref()),
+                                    data,
                                 );
                             }
                             None => {}
@@ -265,8 +265,8 @@ pub fn normalize_configs(
                             Some(found_includes_entry) => match &found_includes_entry.fields.data {
                                 Some(data) => {
                                     record.insert(
-                                        to_camel_case(found_includes_entry.fields.slug.clone()),
-                                        data.clone(),
+                                        to_camel_case(found_includes_entry.fields.slug.as_ref()),
+                                        data,
                                     );
                                 }
                                 None => {}
@@ -297,7 +297,7 @@ pub fn normalize_components(
                 match entry {
                     Some(entry) => {
                         record.insert(
-                            to_camel_case(entry.fields.slug.clone()),
+                            to_camel_case(entry.fields.slug.as_ref()),
                             process_item::<&ChildSys, &Vec<ChildSys>, ItemRef>(&Some(ItemRef::Single(component)), "components", &includes),
                         );
                     }
@@ -313,7 +313,7 @@ pub fn normalize_components(
                     match entry {
                         Some(entry) => {
                             record.insert(
-                                to_camel_case(entry.fields.slug.clone()),
+                                to_camel_case(entry.fields.slug.as_ref()),
                                 process_item::<&ChildSys, &Vec<ChildSys>, ItemRef>(&Some(ItemRef::Single(component)), "components", &includes),
                             );
                         }
@@ -327,23 +327,26 @@ pub fn normalize_components(
     return record;
 }
 
-pub fn normalize_response(response: ContentfulResponse, slug: String) -> NormalizeResponseResult {
+pub fn normalize_response<'slug, 'data>(response: ContentfulResponse<'slug>, slug: String) -> NormalizeResponseResult<'slug, 'data> {
     let main_page_entry = response.items.iter().find(|item| item.fields.slug == slug);
     match main_page_entry {
         Some(main_page_entry) => NormalizeResponseResult {
-            slug: Some(main_page_entry.fields.slug.clone()),
-            labels: Some(normalize_labels(
-                &main_page_entry.fields.labels,
-                &response.includes,
-            )),
-            configs: Some(normalize_configs(
-                &main_page_entry.fields.configs,
-                &response.includes,
-            )),
-            components: Some(normalize_components(
-                &main_page_entry.fields.components,
-                &response.includes,
-            )),
+            slug: Some(main_page_entry.fields.slug),
+            // labels: Some(normalize_labels(
+            //     &main_page_entry.fields.labels,
+            //     &response.includes,
+            // )),
+            labels: None,
+            configs: None,
+            // configs: Some(normalize_configs(
+            //     &main_page_entry.fields.configs,
+            //     &response.includes,
+            // )),
+            // components: Some(normalize_components(
+            //     &main_page_entry.fields.components,
+            //     &response.includes,
+            // )),
+            components: None,
         },
         None => NormalizeResponseResult {
             slug: None,

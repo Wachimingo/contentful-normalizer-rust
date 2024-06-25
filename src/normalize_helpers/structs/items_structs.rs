@@ -123,14 +123,15 @@ impl<'de> Deserialize<'de> for Item {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub enum ItemsFieldTypes {
+pub enum ItemsFieldTypes<'slug> {
     Text(String),
+    Text2(&'slug str),
     Item(Item),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct ItemsFields {
-    pub slug: String,
+pub struct ItemsFields<'slug> {
+    pub slug: &'slug str,
     // #[serde(skip_serializing_if = "Option::is_none")]
     // pub seo: Option<serde_json::Map<String, Value>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -145,13 +146,13 @@ pub struct ItemsFields {
     pub images: Option<Item>,
 }
 
-impl IntoIterator for ItemsFields {
-    type Item = (String, Option<ItemsFieldTypes>);
+impl<'slug> IntoIterator for ItemsFields<'slug> {
+    type Item = (String, Option<ItemsFieldTypes<'slug>>);
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
         vec![
-            ("slug".to_string(), Some(ItemsFieldTypes::Text(self.slug))),
+            ("slug".to_string(), Some(ItemsFieldTypes::Text2(self.slug))),
             ("title".to_string(), self.title.map(ItemsFieldTypes::Text)),
             (
                 "components".to_string(),

@@ -107,16 +107,16 @@ pub struct ParsedFieldsResult {
     pub configs: Option<Vec<ParsedIncludesEntry>>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct NormalizeResponseResult {
+#[derive(Clone, Debug, Serialize)]
+pub struct NormalizeResponseResult<'slug, 'data> {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub slug: Option<String>,
+    pub slug: Option<&'slug str>,
     // #[serde(skip_serializing_if = "Option::is_none")]
     // pub seo: Option<Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub labels: Option<HashMap<String, String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub configs: Option<HashMap<String, Data>>,
+    pub configs: Option<HashMap<String, &'data Data>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub components: Option<HashMap<String, Option<Vec<ParsedIncludesEntry>>>>,
 }
