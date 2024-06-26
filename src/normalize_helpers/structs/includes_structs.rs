@@ -41,16 +41,16 @@ pub enum IncludesFieldTypes {
     Link(String),
     Data(Data),
     FallbackImage(ChildSys),
-    CommonTermsAndConditionsItems(Item),
+    CommonTermsAndConditionsItems(Item<ChildSys>),
     ConfirmationText(String),
     ErrorText(String),
     ConfirmButtonText(String),
     File(File),
-    Item(Item),
-    Components(Item),
-    Configs(Item),
-    Labels(Item),
-    Images(Item),
+    Item(Item<ChildSys>),
+    Components(Item<ChildSys>),
+    Configs(Item<ChildSys>),
+    Labels(Item<ChildSys>),
+    Images(Item<ChildSys>),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -68,12 +68,12 @@ pub struct IncludesFields {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<Data>,
     #[serde(rename = "fallbackImage", skip_serializing_if = "Option::is_none")]
-    pub fallback_image: Option<Item>,
+    pub fallback_image: Option<Item<ChildSys>>,
     #[serde(
         rename = "commonTermsAndConditionsItems",
         skip_serializing_if = "Option::is_none"
     )]
-    pub common_terms_and_conditions_items: Option<Item>,
+    pub common_terms_and_conditions_items: Option<Item<ChildSys>>,
     #[serde(rename = "confirmationText", skip_serializing_if = "Option::is_none")]
     pub confirmation_text: Option<String>,
     #[serde(rename = "errorText", skip_serializing_if = "Option::is_none")]
@@ -83,13 +83,13 @@ pub struct IncludesFields {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub file: Option<File>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub components: Option<Item>,
+    pub components: Option<Item<ChildSys>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub labels: Option<Item>,
+    pub labels: Option<Item<ChildSys>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub configs: Option<Item>,
+    pub configs: Option<Item<ChildSys>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub images: Option<Item>,
+    pub images: Option<Item<ChildSys>>,
 }
 
 // This is the way to make an struct be able to iter as a hashmap does

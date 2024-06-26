@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use super::*;
+use common_structs::ChildSys;
 use includes_structs::{Data, File};
 use items_structs::Item;
 use serde::{Deserialize, Serialize, Serializer};
@@ -21,7 +22,7 @@ pub struct ParsedIncludesAssetEntry {
         rename = "commonTermsAndConditionsItems",
         skip_serializing_if = "Option::is_none"
     )]
-    pub common_terms_and_conditions_items: Option<Item>,
+    pub common_terms_and_conditions_items: Option<Item<ChildSys>>,
     #[serde(rename = "confirmationText", skip_serializing_if = "Option::is_none")]
     pub confirmation_text: Option<String>,
     #[serde(rename = "errorText", skip_serializing_if = "Option::is_none")]

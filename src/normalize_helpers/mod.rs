@@ -1,7 +1,6 @@
 use structs::{
     common_structs::{ChildSys, SysField},
     includes_structs::Data,
-    items_structs::{ItemRef, SingleMultiple},
     result_structs::{NormalizeResponseResult, ParsedFieldsResult, ParsedIncludesEntryResult},
     ContentfulResponse, IncludesEntry,
 };
@@ -15,16 +14,16 @@ use self::structs::{
     ContentfulIncludes,
 };
 
-pub fn process_item<'a, U: SysField, V: IntoIterator<Item = U> + 'a, T: SingleMultiple<'a, U, V> + 'a>(
-    item: &'a Option<T>,
+pub fn process_item<'a>(
+    item: Option<Item<ChildSys>>,
     key: &str,
     includes: &ContentfulIncludes,
 ) -> Option<Vec<ParsedIncludesEntry>> {
     let mut items_collector: HashMap<String, Vec<ParsedIncludesEntry>> = HashMap::new();
     match item {
         Some(item) => {
-            match item.single() {
-                Some(item) => {
+            match item {
+                Item::Single(item) => {
                     find_and_insert(
                         &item.link_type(),
                         &item.id(),
@@ -32,11 +31,8 @@ pub fn process_item<'a, U: SysField, V: IntoIterator<Item = U> + 'a, T: SingleMu
                         &includes,
                         &mut items_collector,
                     );
-                }
-                None => {}
-            };
-            match item.multiple() {
-                Some(items) => {
+                },
+                Item::Multiple(items) => {
                     for item in items {
                         find_and_insert(
                             &item.link_type(),
@@ -47,8 +43,7 @@ pub fn process_item<'a, U: SysField, V: IntoIterator<Item = U> + 'a, T: SingleMu
                         );
                     }
                 }
-                None => {}
-            };
+            }
         }
         None => {}
     }
@@ -76,9 +71,9 @@ pub fn find_data(
         text: includes_entry.fields.text.clone(),
         link: includes_entry.fields.link.clone(),
         data: includes_entry.fields.data.clone(),
-        fallback_image: process_item::<&ChildSys, Vec<&ChildSys>, Item>(&includes_entry.fields.fallback_image, key, includes),
-        common_terms_and_conditions_items: process_item::<&ChildSys, Vec<&ChildSys>, Item>(
-            &includes_entry.fields.common_terms_and_conditions_items.clone(),
+        fallback_image: process_item(includes_entry.fields.fallback_image.clone(), key, includes),
+        common_terms_and_conditions_items: process_item(
+            includes_entry.fields.common_terms_and_conditions_items.clone(),
             key,
             includes,
         ),
@@ -86,10 +81,10 @@ pub fn find_data(
         error_text: includes_entry.fields.error_text.clone(),
         confirm_button_text: includes_entry.fields.confirm_button_text.clone(),
         file: None,
-        components: process_item::<&ChildSys, Vec<&ChildSys>, Item>(&includes_entry.fields.components.clone(), key, includes),
-        labels: process_item::<&ChildSys, Vec<&ChildSys>, Item>(&includes_entry.fields.labels.clone(), key, includes),
-        configs: process_item::<&ChildSys, Vec<&ChildSys>, Item>(&includes_entry.fields.configs.clone(), key, includes),
-        images: process_item::<&ChildSys, Vec<&ChildSys>, Item>(&includes_entry.fields.images.clone(), key, includes),
+        components: process_item(includes_entry.fields.components.clone(), key, includes),
+        labels: process_item(includes_entry.fields.labels.clone(), key, includes),
+        configs: process_item(includes_entry.fields.configs.clone(), key, includes),
+        images: process_item(includes_entry.fields.images.clone(), key, includes),
     };
     parsed_result
 }
@@ -170,14 +165,14 @@ pub fn parse_fields(entry: IncludesEntry, includes: &ContentfulIncludes) -> Pars
     ParsedFieldsResult {
         title: entry.fields.title,
         slug: entry.fields.slug,
-        components: process_item::<&ChildSys, Vec<&ChildSys>, Item>(&entry.fields.components, "components", includes),
-        labels: process_item::<&ChildSys, Vec<&ChildSys>, Item>(&entry.fields.labels, "labels", includes),
-        configs: process_item::<&ChildSys, Vec<&ChildSys>, Item>(&entry.fields.configs, "configs", includes),
+        components: process_item(entry.fields.components, "components", includes),
+        labels: process_item(entry.fields.labels, "labels", includes),
+        configs: process_item(entry.fields.configs, "configs", includes),
     }
 }
 
 pub fn normalize_labels(
-    labels: &Option<Item>,
+    labels: &Option<Item<ChildSys>>,
     includes: &ContentfulIncludes,
 ) -> HashMap<String, String> {
     let mut record: HashMap<String, String> = HashMap::new();
@@ -230,7 +225,7 @@ pub fn normalize_labels(
 }
 
 pub fn normalize_configs<'data>(
-    configs: &Option<Item>,
+    configs: &Option<Item<ChildSys>>,
     includes: &'data ContentfulIncludes,
 ) -> HashMap<String, &'data Data> {
     let mut record: HashMap<String, &Data> = HashMap::new();
@@ -283,7 +278,7 @@ pub fn normalize_configs<'data>(
 }
 
 pub fn normalize_components(
-    components: &Option<Item>,
+    components: &Option<Item<ChildSys>>,
     includes: &ContentfulIncludes,
 ) -> HashMap<String, Option<Vec<ParsedIncludesEntry>>> {
     let mut record: HashMap<String, Option<Vec<ParsedIncludesEntry>>> = HashMap::new();
@@ -298,7 +293,7 @@ pub fn normalize_components(
                     Some(entry) => {
                         record.insert(
                             to_camel_case(entry.fields.slug.as_ref()),
-                            process_item::<&ChildSys, &Vec<ChildSys>, ItemRef>(&Some(ItemRef::Single(component)), "components", &includes),
+                            process_item(Some(Item::Single(component.clone())), "components", &includes),
                         );
                     }
                     None => {}
@@ -314,7 +309,7 @@ pub fn normalize_components(
                         Some(entry) => {
                             record.insert(
                                 to_camel_case(entry.fields.slug.as_ref()),
-                                process_item::<&ChildSys, &Vec<ChildSys>, ItemRef>(&Some(ItemRef::Single(component)), "components", &includes),
+                                process_item(Some(Item::Single(component.clone())), "components", &includes),
                             );
                         }
                         None => {}

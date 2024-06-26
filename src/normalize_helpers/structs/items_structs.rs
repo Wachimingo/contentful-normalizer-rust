@@ -7,13 +7,9 @@ use std::fmt;
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(untagged)]
-pub enum Item {
-    Single(ChildSys),
-    Multiple(Vec<ChildSys>),
-}
-pub enum ItemRef<'a> {
-    Single(&'a ChildSys),
-    Multiple(&'a Vec<ChildSys>),
+pub enum Item<T> {
+    Single(T),
+    Multiple(Vec<T>),
 }
 
 pub trait SingleMultiple<'a, U, V> {
@@ -23,7 +19,7 @@ pub trait SingleMultiple<'a, U, V> {
     fn multiple(&'a self) -> Option<V>;
 }
 
-impl<'a> SingleMultiple<'a, ChildSys, &'a Vec<ChildSys>> for Item {
+impl<'a> SingleMultiple<'a, ChildSys, &'a Vec<ChildSys>> for Item<ChildSys> {
     type SingleType = ChildSys;
     type MultipleType = Vec<ChildSys>;
 
@@ -41,7 +37,7 @@ impl<'a> SingleMultiple<'a, ChildSys, &'a Vec<ChildSys>> for Item {
     }
 }
 
-impl<'a> SingleMultiple<'a, &'a ChildSys, Vec<& 'a ChildSys>> for Item {
+impl<'a> SingleMultiple<'a, &'a ChildSys, Vec<& 'a ChildSys>> for Item<ChildSys> {
     type SingleType = &'a ChildSys;
     type MultipleType = Vec<& 'a ChildSys>;
 
@@ -65,28 +61,10 @@ impl<'a> SingleMultiple<'a, &'a ChildSys, Vec<& 'a ChildSys>> for Item {
     }
 }
 
-impl<'a> SingleMultiple<'a, &'a ChildSys, &'a Vec<ChildSys>> for ItemRef<'a> {
-    type SingleType = &'a ChildSys;
-    type MultipleType = &'a Vec<ChildSys>;
-
-    fn single(&self) -> Option<Self::SingleType> {
-        match self {
-            Self::Single(single) => Some(single),
-            _ => None,
-        }
-    }
-    fn multiple(&self) -> Option<Self::MultipleType> {
-        match self {
-            Self::Multiple(multiple) => Some(multiple),
-            _ => None,
-        }
-    }
-}
-
 struct ItemVisitor;
 
 impl<'de> Visitor<'de> for ItemVisitor {
-    type Value = Item;
+    type Value = Item<ChildSys>;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         formatter.write_str("Not a valid item")
@@ -113,7 +91,7 @@ impl<'de> Visitor<'de> for ItemVisitor {
     }
 }
 
-impl<'de> Deserialize<'de> for Item {
+impl<'de> Deserialize<'de> for Item<ChildSys> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -123,37 +101,37 @@ impl<'de> Deserialize<'de> for Item {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub enum ItemsFieldTypes<'slug> {
+pub enum ItemsFieldTypes<'a> {
     Text(String),
-    Text2(&'slug str),
-    Item(Item),
+    Text2(&'a str),
+    Item(Item<ChildSys>),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct ItemsFields<'slug> {
-    pub slug: &'slug str,
+pub struct ItemsFields<'a> {
+    pub slug: &'a str,
     // #[serde(skip_serializing_if = "Option::is_none")]
     // pub seo: Option<serde_json::Map<String, Value>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub title: Option<String>,
+    pub title: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub components: Option<Item>,
+    pub components: Option<Item<ChildSys>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub labels: Option<Item>,
+    pub labels: Option<Item<ChildSys>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub configs: Option<Item>,
+    pub configs: Option<Item<ChildSys>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub images: Option<Item>,
+    pub images: Option<Item<ChildSys>>,
 }
 
-impl<'slug> IntoIterator for ItemsFields<'slug> {
-    type Item = (String, Option<ItemsFieldTypes<'slug>>);
+impl<'a> IntoIterator for ItemsFields<'a> {
+    type Item = (String, Option<ItemsFieldTypes<'a>>);
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
         vec![
             ("slug".to_string(), Some(ItemsFieldTypes::Text2(self.slug))),
-            ("title".to_string(), self.title.map(ItemsFieldTypes::Text)),
+            ("title".to_string(), self.title.map(ItemsFieldTypes::Text2)),
             (
                 "components".to_string(),
                 self.components.map(ItemsFieldTypes::Item),
