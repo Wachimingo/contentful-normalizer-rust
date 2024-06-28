@@ -1,5 +1,5 @@
 use structs::{
-    common_structs::{ChildSys, SysField},
+    common_structs::ChildSys,
     includes_structs::Data,
     result_structs::{NormalizeResponseResult, ParsedFieldsResult, ParsedIncludesEntryResult},
     ContentfulResponse, IncludesEntry,
@@ -15,38 +15,36 @@ use self::structs::{
 };
 
 pub fn process_item<'a>(
-    item: Option<Item<ChildSys>>,
-    key: &str,
-    includes: &ContentfulIncludes,
-) -> Option<Vec<ParsedIncludesEntry>> {
+    item: Option<Item<ChildSys<'a>>>,
+    key: &'a str,
+    includes: &'a ContentfulIncludes<'a>,
+) -> Option<Vec<ParsedIncludesEntry<'a>>> {
     let mut items_collector: HashMap<String, Vec<ParsedIncludesEntry>> = HashMap::new();
-    match item {
-        Some(item) => {
-            match item {
-                Item::Single(item) => {
-                    find_and_insert(
-                        &item.link_type(),
-                        &item.id(),
-                        &key,
-                        &includes,
-                        &mut items_collector,
-                    );
-                },
-                Item::Multiple(items) => {
-                    for item in items {
-                        find_and_insert(
-                            &item.link_type(),
-                            &item.id(),
-                            &key,
-                            &includes,
-                            &mut items_collector,
-                        );
-                    }
-                }
-            }
-        }
-        None => {}
-    }
+    // match item {
+    //     Some(item) => match item {
+    //         Item::Single(item) => {
+    //             find_and_insert(
+    //                 item.sys.unwrap().link_type,
+    //                 item.sys.unwrap().id,
+    //                 &key,
+    //                 &includes,
+    //                 &mut items_collector,
+    //             );
+    //         }
+    //         Item::Multiple(items) => {
+    //             for item in items {
+    //                 find_and_insert(
+    //                     item.sys.unwrap().link_type,
+    //                     item.sys.unwrap().id,
+    //                     &key,
+    //                     &includes,
+    //                     &mut items_collector,
+    //                 );
+    //             }
+    //         }
+    //     },
+    //     None => {}
+    // }
     let item_arr = items_collector
         .values()
         .cloned()
@@ -59,11 +57,11 @@ pub fn process_item<'a>(
     }
 }
 
-pub fn find_data(
-    includes_entry: &IncludesEntry,
-    key: &str,
-    includes: &ContentfulIncludes,
-) -> ParsedIncludesEntryResult {
+pub fn find_data<'a>(
+    includes_entry: &'a IncludesEntry<'a>,
+    key: &'a str,
+    includes: &'a ContentfulIncludes<'a>,
+) -> ParsedIncludesEntryResult<'a> {
     let parsed_result = ParsedIncludesEntryResult {
         slug: includes_entry.fields.slug.clone(),
         title: includes_entry.fields.title.clone(),
@@ -73,7 +71,10 @@ pub fn find_data(
         data: includes_entry.fields.data.clone(),
         fallback_image: process_item(includes_entry.fields.fallback_image.clone(), key, includes),
         common_terms_and_conditions_items: process_item(
-            includes_entry.fields.common_terms_and_conditions_items.clone(),
+            includes_entry
+                .fields
+                .common_terms_and_conditions_items
+                .clone(),
             key,
             includes,
         ),
@@ -89,18 +90,15 @@ pub fn find_data(
     parsed_result
 }
 
-pub fn find_and_insert<'vec>(
-    link_type: &str,
-    id: &str,
-    key: &str,
-    includes: &ContentfulIncludes,
-    collector: &'vec mut HashMap<String, Vec<ParsedIncludesEntry>>,
-) -> &'vec HashMap<String, Vec<ParsedIncludesEntry>> {
+pub fn find_and_insert<'a>(
+    link_type: &'a str,
+    id: &'a str,
+    key: &'a str,
+    includes: &'a ContentfulIncludes<'a>,
+    collector: &'a mut HashMap<String, Vec<ParsedIncludesEntry<'a>>>,
+) -> &'a HashMap<String, Vec<ParsedIncludesEntry<'a>>> {
     if link_type == "Asset" {
-        let found_includes_entry = &includes
-            .entries
-            .iter()
-            .find(|entry| entry.sys.id == id);
+        let found_includes_entry = includes.entries.iter().find(|entry| entry.sys.id == id);
         match found_includes_entry {
             Some(found_includes_entry) => {
                 let parse_asset = ParsedIncludesAssetEntry {
@@ -116,11 +114,12 @@ pub fn find_and_insert<'vec>(
                     confirmation_text: found_includes_entry.fields.confirmation_text.clone(),
                     error_text: found_includes_entry.fields.error_text.clone(),
                     confirm_button_text: found_includes_entry.fields.confirm_button_text.clone(),
-                    url: found_includes_entry
-                        .fields
-                        .file
-                        .as_ref()
-                        .and_then(|file| file.url.clone()),
+                    url: None,
+                    // url: found_includes_entry
+                    //     .fields
+                    //     .file
+                    //     .as_ref()
+                    //     .and_then(|file| file.url.clone()),
                     file: found_includes_entry.fields.file.clone(),
                 };
                 match collector.get_mut(key) {
@@ -138,10 +137,7 @@ pub fn find_and_insert<'vec>(
             None => {}
         }
     } else {
-        let found_includes_entry = &includes
-            .entries
-            .iter()
-            .find(|entry| entry.sys.id == id);
+        let found_includes_entry = includes.entries.iter().find(|entry| entry.sys.id == id);
         match found_includes_entry {
             Some(found_includes_entry) => {
                 match collector.get_mut(key) {
@@ -161,7 +157,7 @@ pub fn find_and_insert<'vec>(
     collector
 }
 
-pub fn parse_fields(entry: IncludesEntry, includes: &ContentfulIncludes) -> ParsedFieldsResult {
+pub fn parse_fields<'a>(entry: IncludesEntry<'a>, includes: &'a ContentfulIncludes<'a>) -> ParsedFieldsResult<'a> {
     ParsedFieldsResult {
         title: entry.fields.title,
         slug: entry.fields.slug,
@@ -171,11 +167,11 @@ pub fn parse_fields(entry: IncludesEntry, includes: &ContentfulIncludes) -> Pars
     }
 }
 
-pub fn normalize_labels(
-    labels: &Option<Item<ChildSys>>,
-    includes: &ContentfulIncludes,
-) -> HashMap<String, String> {
-    let mut record: HashMap<String, String> = HashMap::new();
+pub fn normalize_labels<'a>(
+    labels: Option<Item<ChildSys<'a>>>,
+    includes: &'a ContentfulIncludes<'a>,
+) -> HashMap<String, &'a str> {
+    let mut record: HashMap<String, &'a str> = HashMap::new();
     match labels {
         Some(labels) => {
             match labels {
@@ -183,13 +179,13 @@ pub fn normalize_labels(
                     let found_includes_entry = includes
                         .entries
                         .iter()
-                        .find(|entry| entry.sys.id == label.sys.id);
+                        .find(|entry| entry.sys.id == label.sys.unwrap().id);
                     match found_includes_entry {
-                        Some(found_includes_entry) => match &found_includes_entry.fields.text {
+                        Some(found_includes_entry) => match found_includes_entry.fields.text {
                             Some(text) => {
                                 record.insert(
-                                    to_camel_case(found_includes_entry.fields.slug.as_ref()),
-                                    text.clone(),
+                                    to_camel_case(found_includes_entry.fields.slug),
+                                    text,
                                 );
                             }
                             None => {}
@@ -202,13 +198,13 @@ pub fn normalize_labels(
                         let found_includes_entry = includes
                             .entries
                             .iter()
-                            .find(|entry| entry.sys.id == label.sys.id);
+                            .find(|entry| entry.sys.id == label.sys.unwrap().id);
                         match found_includes_entry {
-                            Some(found_includes_entry) => match &found_includes_entry.fields.text {
+                            Some(found_includes_entry) => match found_includes_entry.fields.text {
                                 Some(text) => {
                                     record.insert(
-                                        to_camel_case(found_includes_entry.fields.slug.as_ref()),
-                                        text.clone(),
+                                        to_camel_case(found_includes_entry.fields.slug),
+                                        text,
                                     );
                                 }
                                 None => {}
@@ -224,11 +220,11 @@ pub fn normalize_labels(
     }
 }
 
-pub fn normalize_configs<'data>(
-    configs: &Option<Item<ChildSys>>,
-    includes: &'data ContentfulIncludes,
-) -> HashMap<String, &'data Data> {
-    let mut record: HashMap<String, &Data> = HashMap::new();
+pub fn normalize_configs<'a>(
+    configs: Option<Item<ChildSys<'a>>>,
+    includes: &'a ContentfulIncludes<'a>,
+) -> HashMap<String, &'a Data> {
+    let mut record: HashMap<String, &'a Data> = HashMap::new();
     match configs {
         Some(configs) => {
             match configs {
@@ -236,12 +232,12 @@ pub fn normalize_configs<'data>(
                     let found_includes_entry = includes
                         .entries
                         .iter()
-                        .find(|entry| entry.sys.id == config.sys.id);
+                        .find(|entry| entry.sys.id == config.sys.unwrap().id);
                     match found_includes_entry {
                         Some(found_includes_entry) => match &found_includes_entry.fields.data {
                             Some(data) => {
                                 record.insert(
-                                    to_camel_case(found_includes_entry.fields.slug.as_ref()),
+                                    to_camel_case(found_includes_entry.fields.slug),
                                     data,
                                 );
                             }
@@ -255,12 +251,12 @@ pub fn normalize_configs<'data>(
                         let found_includes_entry = includes
                             .entries
                             .iter()
-                            .find(|entry| entry.sys.id == config.sys.id);
+                            .find(|entry| entry.sys.id == config.sys.unwrap().id);
                         match found_includes_entry {
                             Some(found_includes_entry) => match &found_includes_entry.fields.data {
                                 Some(data) => {
                                     record.insert(
-                                        to_camel_case(found_includes_entry.fields.slug.as_ref()),
+                                        to_camel_case(found_includes_entry.fields.slug),
                                         data,
                                     );
                                 }
@@ -277,23 +273,27 @@ pub fn normalize_configs<'data>(
     }
 }
 
-pub fn normalize_components(
-    components: &Option<Item<ChildSys>>,
-    includes: &ContentfulIncludes,
-) -> HashMap<String, Option<Vec<ParsedIncludesEntry>>> {
-    let mut record: HashMap<String, Option<Vec<ParsedIncludesEntry>>> = HashMap::new();
+pub fn normalize_components<'a>(
+    components: Option<Item<ChildSys<'a>>>,
+    includes: &'a ContentfulIncludes<'a>,
+) -> HashMap<String, Option<Vec<ParsedIncludesEntry<'a>>>> {
+    let mut record: HashMap<String, Option<Vec<ParsedIncludesEntry<'a>>>> = HashMap::new();
     match components {
         Some(components) => match components {
             Item::Single(component) => {
                 let entry = includes
                     .entries
                     .iter()
-                    .find(|entry| entry.sys.id == component.sys.id);
+                    .find(|entry| entry.sys.id == component.sys.unwrap().id);
                 match entry {
                     Some(entry) => {
                         record.insert(
-                            to_camel_case(entry.fields.slug.as_ref()),
-                            process_item(Some(Item::Single(component.clone())), "components", &includes),
+                            to_camel_case(entry.fields.slug),
+                            process_item(
+                                Some(Item::Single(component.clone())),
+                                "components",
+                                &includes,
+                            ),
                         );
                     }
                     None => {}
@@ -304,12 +304,16 @@ pub fn normalize_components(
                     let entry = includes
                         .entries
                         .iter()
-                        .find(|entry| entry.sys.id == component.sys.id);
+                        .find(|entry| entry.sys.id == component.sys.unwrap().id);
                     match entry {
                         Some(entry) => {
                             record.insert(
-                                to_camel_case(entry.fields.slug.as_ref()),
-                                process_item(Some(Item::Single(component.clone())), "components", &includes),
+                                to_camel_case(entry.fields.slug),
+                                process_item(
+                                    Some(Item::Single(component.clone())),
+                                    "components",
+                                    &includes,
+                                ),
                             );
                         }
                         None => {}
@@ -322,11 +326,14 @@ pub fn normalize_components(
     return record;
 }
 
-pub fn normalize_response<'slug, 'data>(response: ContentfulResponse<'slug>, slug: String) -> NormalizeResponseResult<'slug, 'data> {
-    let main_page_entry = response.items.iter().find(|item| item.fields.slug == slug);
+pub fn normalize_response<'a>(
+    response: ContentfulResponse<'a>,
+    slug: String,
+) -> NormalizeResponseResult<'a> {
+    let main_page_entry = response.items.iter().find(|item| item.fields.slug.unwrap() == slug);
     match main_page_entry {
         Some(main_page_entry) => NormalizeResponseResult {
-            slug: Some(main_page_entry.fields.slug),
+            slug: main_page_entry.fields.slug,
             // labels: Some(normalize_labels(
             //     &main_page_entry.fields.labels,
             //     &response.includes,

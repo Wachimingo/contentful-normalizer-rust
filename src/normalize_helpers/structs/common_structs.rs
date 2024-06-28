@@ -1,75 +1,128 @@
-use serde::{Deserialize, Serialize};
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct ChildSysInner {
-    pub id: String,
+use serde::{Deserialize, Deserializer, Serialize, de::{self, MapAccess, Visitor},};
+use std::fmt;
+#[derive(Copy, Clone, Debug, Deserialize, Serialize)]
+pub struct ChildSysInner<'a> {
+    pub id: &'a str,
     #[serde(rename = "linkType")]
-    pub link_type: String,
+    pub link_type: &'a str,
     #[serde(rename = "type")]
-    pub object_type: String,
+    pub object_type: &'a str,
 }
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct ChildSys {
-    pub sys: ChildSysInner
-}
-
-pub trait SysField {
-    fn link_type(&self) -> &str;
-    fn id(&self) -> &str;
+#[derive(Copy, Clone, Debug, Serialize)]
+pub struct ChildSys<'a> {
+    pub sys: Option<ChildSysInner<'a>>
 }
 
-impl SysField for ChildSys {
-    fn link_type(&self) -> &str {
-        &self.sys.link_type
+impl<'de:'a,'a> Deserialize<'de> for ChildSys<'a> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct ChildSysVisitor<'a> {
+            marker: std::marker::PhantomData<&'a ()>,
+        }
+
+        impl<'de: 'a, 'a> Visitor<'de> for ChildSysVisitor<'a> {
+            type Value = ChildSys<'a>;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("struct ChildSys")
+            }
+
+            fn visit_map<V>(self, mut map: V) -> Result<ChildSys<'a>, V::Error>
+            where
+                V: MapAccess<'de>,
+            {
+                let mut sys = None;
+
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        "sys" => {
+                            if sys.is_some() {
+                                return Err(de::Error::duplicate_field("sys"));
+                            }
+                            sys = Some(map.next_value()?);
+                        },
+                        _ => return Err(de::Error::unknown_field(key, FIELDS)),
+                    }
+                }
+
+                // let sys = sys.ok_or_else(|| de::Error::missing_field("ChildSys_sys"))?;
+                let sys = sys.unwrap_or_else(|| None);
+
+                Ok(ChildSys { sys })
+            }
+        }
+
+        const FIELDS: &'static [&'static str] = &["sys"];
+        deserializer.deserialize_struct("ChildSys", FIELDS, ChildSysVisitor { marker: std::marker::PhantomData })
     }
-    fn id(&self) -> &str {
-        &self.sys.id
-    }
-}
-
-impl SysField for &ChildSys {
-    fn link_type(&self) -> &str {
-        &self.sys.link_type
-    }
-    fn id(&self) -> &str {
-        &self.sys.id
-    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Space {
-    pub sys: ChildSysInner,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Environment {
-    pub sys: ChildSysInner,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct ContentType {
-    pub sys: ChildSysInner,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct TopLevelSys {
-    pub id: String,
-    pub space: Space,
+pub struct TopLevelSys<'a> {
+    pub id: &'a str,
+    pub space: ChildSys<'a>,
     #[serde(rename = "type")]
-    pub object_type: String,
+    pub object_type: &'a str,
     #[serde(rename = "createdAt")]
-    pub created_at: String,
+    pub created_at: &'a str,
     #[serde(rename = "updatedAt")]
-    pub updated_at: String,
-    pub environment: Environment,
+    pub updated_at: &'a str,
+    pub environment: ChildSys<'a>,
     pub revision: u8,
     #[serde(rename = "contentType")]
-    pub content_type: Option<ContentType>,
-    pub locale: String,
+    pub content_type: Option<ChildSys<'a>>,
+    pub locale: &'a str,
 }
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct ContentfulEntity {
-    pub sys: TopLevelSys,
+#[derive(Clone, Debug, Serialize)]
+pub struct ContentfulEntity<'a> {
+    pub sys: TopLevelSys<'a>,
+}
+
+impl<'de:'a,'a> Deserialize<'de> for ContentfulEntity<'a> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct ContentfulEntityVisitor<'a> {
+            marker: std::marker::PhantomData<&'a ()>,
+        }
+
+        impl<'de: 'a, 'a> Visitor<'de> for ContentfulEntityVisitor<'a> {
+            type Value = ContentfulEntity<'a>;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("struct ContentfulEntity")
+            }
+
+            fn visit_map<V>(self, mut map: V) -> Result<ContentfulEntity<'a>, V::Error>
+            where
+                V: MapAccess<'de>,
+            {
+                let mut sys = None;
+
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        "sys" => {
+                            if sys.is_some() {
+                                return Err(de::Error::duplicate_field("sys"));
+                            }
+                            sys = Some(map.next_value()?);
+                        },                        
+                        _ => {}
+                    }
+                }
+
+                let sys = sys.ok_or_else(|| de::Error::missing_field("ContentfulEntity_sys"))?;
+
+                Ok(ContentfulEntity { sys })
+            }
+        }
+
+        const FIELDS: &'static [&'static str] = &["sys"];
+        deserializer.deserialize_struct("ContentfulEntity", FIELDS, ContentfulEntityVisitor { marker: std::marker::PhantomData })
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
