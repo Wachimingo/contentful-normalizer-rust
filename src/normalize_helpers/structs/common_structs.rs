@@ -1,4 +1,7 @@
-use serde::{Deserialize, Deserializer, Serialize, de::{self, MapAccess, Visitor},};
+use serde::{
+    de::{self, MapAccess, Visitor},
+    Deserialize, Deserializer, Serialize,
+};
 use std::fmt;
 #[derive(Copy, Clone, Debug, Deserialize, Serialize)]
 pub struct ChildSysInner<'a> {
@@ -10,10 +13,22 @@ pub struct ChildSysInner<'a> {
 }
 #[derive(Copy, Clone, Debug, Serialize)]
 pub struct ChildSys<'a> {
-    pub sys: Option<ChildSysInner<'a>>
+    pub sys: ChildSysInner<'a>,
 }
 
-impl<'de:'a,'a> Deserialize<'de> for ChildSys<'a> {
+impl<'a> ChildSys<'a> {
+    pub fn default() -> Self {
+        ChildSys {
+            sys: ChildSysInner {
+                id: "",
+                link_type: "",
+                object_type: "",
+            },
+        }
+    }
+}
+
+impl<'de: 'a, 'a> Deserialize<'de> for ChildSys<'a> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -33,29 +48,36 @@ impl<'de:'a,'a> Deserialize<'de> for ChildSys<'a> {
             where
                 V: MapAccess<'de>,
             {
-                let mut sys = None;
+                let mut sys = ChildSysInner {
+                    id: "",
+                    link_type: "",
+                    object_type: "",
+                };
 
                 while let Some(key) = map.next_key()? {
                     match key {
                         "sys" => {
-                            if sys.is_some() {
-                                return Err(de::Error::duplicate_field("sys"));
-                            }
-                            sys = Some(map.next_value()?);
-                        },
+                            sys = map.next_value()?;
+                        }
                         _ => return Err(de::Error::unknown_field(key, FIELDS)),
                     }
                 }
 
                 // let sys = sys.ok_or_else(|| de::Error::missing_field("ChildSys_sys"))?;
-                let sys = sys.unwrap_or_else(|| None);
+                let sys = sys;
 
                 Ok(ChildSys { sys })
             }
         }
 
         const FIELDS: &'static [&'static str] = &["sys"];
-        deserializer.deserialize_struct("ChildSys", FIELDS, ChildSysVisitor { marker: std::marker::PhantomData })
+        deserializer.deserialize_struct(
+            "ChildSys",
+            FIELDS,
+            ChildSysVisitor {
+                marker: std::marker::PhantomData,
+            },
+        )
     }
 }
 
@@ -71,8 +93,8 @@ pub struct TopLevelSys<'a> {
     pub updated_at: &'a str,
     pub environment: ChildSys<'a>,
     pub revision: u8,
-    #[serde(rename = "contentType")]
-    pub content_type: Option<ChildSys<'a>>,
+    #[serde(default = "ChildSys::default", rename = "contentType")]
+    pub content_type: ChildSys<'a>,
     pub locale: &'a str,
 }
 #[derive(Clone, Debug, Serialize)]
@@ -80,7 +102,7 @@ pub struct ContentfulEntity<'a> {
     pub sys: TopLevelSys<'a>,
 }
 
-impl<'de:'a,'a> Deserialize<'de> for ContentfulEntity<'a> {
+impl<'de: 'a, 'a> Deserialize<'de> for ContentfulEntity<'a> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -109,7 +131,7 @@ impl<'de:'a,'a> Deserialize<'de> for ContentfulEntity<'a> {
                                 return Err(de::Error::duplicate_field("sys"));
                             }
                             sys = Some(map.next_value()?);
-                        },                        
+                        }
                         _ => {}
                     }
                 }
@@ -121,7 +143,13 @@ impl<'de:'a,'a> Deserialize<'de> for ContentfulEntity<'a> {
         }
 
         const FIELDS: &'static [&'static str] = &["sys"];
-        deserializer.deserialize_struct("ContentfulEntity", FIELDS, ContentfulEntityVisitor { marker: std::marker::PhantomData })
+        deserializer.deserialize_struct(
+            "ContentfulEntity",
+            FIELDS,
+            ContentfulEntityVisitor {
+                marker: std::marker::PhantomData,
+            },
+        )
     }
 }
 

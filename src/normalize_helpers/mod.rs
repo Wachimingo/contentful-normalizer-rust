@@ -15,10 +15,10 @@ use self::structs::{
 };
 
 pub fn process_item<'a>(
-    item: Option<Item<ChildSys<'a>>>,
+    item: Item<ChildSys<'a>>,
     key: &'a str,
-    includes: &'a ContentfulIncludes<'a>,
-) -> Option<Vec<ParsedIncludesEntry<'a>>> {
+    includes: &ContentfulIncludes<'a>,
+) -> Vec<ParsedIncludesEntry<'a>> {
     let mut items_collector: HashMap<String, Vec<ParsedIncludesEntry>> = HashMap::new();
     // match item {
     //     Some(item) => match item {
@@ -50,17 +50,13 @@ pub fn process_item<'a>(
         .cloned()
         .flatten()
         .collect::<Vec<ParsedIncludesEntry>>();
-    if item_arr.is_empty() {
-        None
-    } else {
-        Some(item_arr)
-    }
+    item_arr
 }
 
 pub fn find_data<'a>(
     includes_entry: &'a IncludesEntry<'a>,
     key: &'a str,
-    includes: &'a ContentfulIncludes<'a>,
+    includes: &ContentfulIncludes<'a>,
 ) -> ParsedIncludesEntryResult<'a> {
     let parsed_result = ParsedIncludesEntryResult {
         slug: includes_entry.fields.slug.clone(),
@@ -81,7 +77,7 @@ pub fn find_data<'a>(
         confirmation_text: includes_entry.fields.confirmation_text.clone(),
         error_text: includes_entry.fields.error_text.clone(),
         confirm_button_text: includes_entry.fields.confirm_button_text.clone(),
-        file: None,
+        file: includes_entry.fields.file.clone(),
         components: process_item(includes_entry.fields.components.clone(), key, includes),
         labels: process_item(includes_entry.fields.labels.clone(), key, includes),
         configs: process_item(includes_entry.fields.configs.clone(), key, includes),
@@ -114,7 +110,7 @@ pub fn find_and_insert<'a>(
                     confirmation_text: found_includes_entry.fields.confirmation_text.clone(),
                     error_text: found_includes_entry.fields.error_text.clone(),
                     confirm_button_text: found_includes_entry.fields.confirm_button_text.clone(),
-                    url: None,
+                    url: "",
                     // url: found_includes_entry
                     //     .fields
                     //     .file
@@ -157,7 +153,10 @@ pub fn find_and_insert<'a>(
     collector
 }
 
-pub fn parse_fields<'a>(entry: IncludesEntry<'a>, includes: &'a ContentfulIncludes<'a>) -> ParsedFieldsResult<'a> {
+pub fn parse_fields<'a>(
+    entry: IncludesEntry<'a>,
+    includes: &'a ContentfulIncludes<'a>,
+) -> ParsedFieldsResult<'a> {
     ParsedFieldsResult {
         title: entry.fields.title,
         slug: entry.fields.slug,
@@ -168,160 +167,127 @@ pub fn parse_fields<'a>(entry: IncludesEntry<'a>, includes: &'a ContentfulInclud
 }
 
 pub fn normalize_labels<'a>(
-    labels: Option<Item<ChildSys<'a>>>,
-    includes: &'a ContentfulIncludes<'a>,
+    labels: &Item<ChildSys<'a>>,
+    includes: &ContentfulIncludes<'a>,
 ) -> HashMap<String, &'a str> {
     let mut record: HashMap<String, &'a str> = HashMap::new();
     match labels {
-        Some(labels) => {
-            match labels {
-                Item::Single(label) => {
-                    let found_includes_entry = includes
-                        .entries
-                        .iter()
-                        .find(|entry| entry.sys.id == label.sys.unwrap().id);
-                    match found_includes_entry {
-                        Some(found_includes_entry) => match found_includes_entry.fields.text {
-                            Some(text) => {
-                                record.insert(
-                                    to_camel_case(found_includes_entry.fields.slug),
-                                    text,
-                                );
-                            }
-                            None => {}
-                        },
-                        None => {}
-                    }
+        Item::Single(label) => {
+            let found_includes_entry = includes
+                .entries
+                .iter()
+                .find(|entry| entry.sys.id == label.sys.id);
+            match found_includes_entry {
+                Some(found_includes_entry) => {
+                    record.insert(
+                        to_camel_case(found_includes_entry.fields.slug),
+                        found_includes_entry.fields.text,
+                    );
                 }
-                Item::Multiple(labels) => {
-                    for label in labels {
-                        let found_includes_entry = includes
-                            .entries
-                            .iter()
-                            .find(|entry| entry.sys.id == label.sys.unwrap().id);
-                        match found_includes_entry {
-                            Some(found_includes_entry) => match found_includes_entry.fields.text {
-                                Some(text) => {
-                                    record.insert(
-                                        to_camel_case(found_includes_entry.fields.slug),
-                                        text,
-                                    );
-                                }
-                                None => {}
-                            },
-                            None => {}
-                        }
-                    }
-                }
+                None => {}
             }
-            record
         }
-        None => record,
-    }
-}
-
-pub fn normalize_configs<'a>(
-    configs: Option<Item<ChildSys<'a>>>,
-    includes: &'a ContentfulIncludes<'a>,
-) -> HashMap<String, &'a Data> {
-    let mut record: HashMap<String, &'a Data> = HashMap::new();
-    match configs {
-        Some(configs) => {
-            match configs {
-                Item::Single(config) => {
-                    let found_includes_entry = includes
-                        .entries
-                        .iter()
-                        .find(|entry| entry.sys.id == config.sys.unwrap().id);
-                    match found_includes_entry {
-                        Some(found_includes_entry) => match &found_includes_entry.fields.data {
-                            Some(data) => {
-                                record.insert(
-                                    to_camel_case(found_includes_entry.fields.slug),
-                                    data,
-                                );
-                            }
-                            None => {}
-                        },
-                        None => {}
-                    }
-                }
-                Item::Multiple(configs) => {
-                    for config in configs {
-                        let found_includes_entry = includes
-                            .entries
-                            .iter()
-                            .find(|entry| entry.sys.id == config.sys.unwrap().id);
-                        match found_includes_entry {
-                            Some(found_includes_entry) => match &found_includes_entry.fields.data {
-                                Some(data) => {
-                                    record.insert(
-                                        to_camel_case(found_includes_entry.fields.slug),
-                                        data,
-                                    );
-                                }
-                                None => {}
-                            },
-                            None => {}
-                        }
-                    }
-                }
-            }
-            record
-        }
-        None => record,
-    }
-}
-
-pub fn normalize_components<'a>(
-    components: Option<Item<ChildSys<'a>>>,
-    includes: &'a ContentfulIncludes<'a>,
-) -> HashMap<String, Option<Vec<ParsedIncludesEntry<'a>>>> {
-    let mut record: HashMap<String, Option<Vec<ParsedIncludesEntry<'a>>>> = HashMap::new();
-    match components {
-        Some(components) => match components {
-            Item::Single(component) => {
-                let entry = includes
+        Item::Multiple(labels) => {
+            for label in labels {
+                let found_includes_entry = includes
                     .entries
                     .iter()
-                    .find(|entry| entry.sys.id == component.sys.unwrap().id);
-                match entry {
-                    Some(entry) => {
+                    .find(|entry| entry.sys.id == label.sys.id);
+                match found_includes_entry {
+                    Some(found_includes_entry) => {
                         record.insert(
-                            to_camel_case(entry.fields.slug),
-                            process_item(
-                                Some(Item::Single(component.clone())),
-                                "components",
-                                &includes,
-                            ),
+                            to_camel_case(found_includes_entry.fields.slug),
+                            found_includes_entry.fields.text,
                         );
                     }
                     None => {}
                 }
             }
-            Item::Multiple(components) => {
-                for component in components {
-                    let entry = includes
-                        .entries
-                        .iter()
-                        .find(|entry| entry.sys.id == component.sys.unwrap().id);
-                    match entry {
-                        Some(entry) => {
-                            record.insert(
-                                to_camel_case(entry.fields.slug),
-                                process_item(
-                                    Some(Item::Single(component.clone())),
-                                    "components",
-                                    &includes,
-                                ),
-                            );
-                        }
-                        None => {}
+        }
+    }
+    record
+}
+
+pub fn normalize_configs<'a>(
+    configs: &Item<ChildSys<'a>>,
+    includes: &'a ContentfulIncludes<'a>,
+) -> HashMap<String, &'a Data> {
+    let mut record: HashMap<String, &Data> = HashMap::new();
+    match configs {
+        Item::Single(config) => {
+            let found_includes_entry = includes
+                .entries
+                .iter()
+                .find(|entry| entry.sys.id == config.sys.id);
+            match found_includes_entry {
+                Some(found_includes_entry) => {
+                    record.insert(
+                        to_camel_case(found_includes_entry.fields.slug),
+                        &found_includes_entry.fields.data,
+                    );
+                }
+                None => {}
+            }
+        }
+        Item::Multiple(configs) => {
+            for config in configs {
+                let found_includes_entry = includes
+                    .entries
+                    .iter()
+                    .find(|entry| entry.sys.id == config.sys.id);
+                match found_includes_entry {
+                    Some(found_includes_entry) => {
+                        record.insert(
+                            to_camel_case(found_includes_entry.fields.slug),
+                            &found_includes_entry.fields.data,
+                        );
                     }
+                    None => {}
                 }
             }
-        },
-        None => {}
+        }
+    }
+    record
+}
+
+pub fn normalize_components<'a: 'b, 'b>(
+    components: &Item<ChildSys<'a>>,
+    includes: &'b ContentfulIncludes<'a>,
+) -> HashMap<String, Vec<ParsedIncludesEntry<'a>>> {
+    let mut record: HashMap<String, Vec<ParsedIncludesEntry>> = HashMap::new();
+    match components {
+        Item::Single(component) => {
+            let entry = includes
+                .entries
+                .iter()
+                .find(|entry| entry.sys.id == component.sys.id);
+            match entry {
+                Some(entry) => {
+                    record.insert(
+                        to_camel_case(entry.fields.slug),
+                        process_item(Item::Single(component.clone()), "components", &includes),
+                    );
+                }
+                None => {}
+            }
+        }
+        Item::Multiple(components) => {
+            for component in components {
+                let entry = includes
+                    .entries
+                    .iter()
+                    .find(|entry| entry.sys.id == component.sys.id);
+                match entry {
+                    Some(entry) => {
+                        record.insert(
+                            to_camel_case(entry.fields.slug),
+                            process_item(Item::Single(component.clone()), "components", &includes),
+                        );
+                    }
+                    None => {}
+                }
+            }
+        }
     }
     return record;
 }
@@ -330,31 +296,29 @@ pub fn normalize_response<'a>(
     response: ContentfulResponse<'a>,
     slug: String,
 ) -> NormalizeResponseResult<'a> {
-    let main_page_entry = response.items.iter().find(|item| item.fields.slug.unwrap() == slug);
+    let main_page_entry = response.items.iter().find(|item| item.fields.slug == slug);
     match main_page_entry {
-        Some(main_page_entry) => NormalizeResponseResult {
-            slug: main_page_entry.fields.slug,
-            // labels: Some(normalize_labels(
-            //     &main_page_entry.fields.labels,
-            //     &response.includes,
-            // )),
-            labels: None,
-            configs: None,
-            // configs: Some(normalize_configs(
-            //     &main_page_entry.fields.configs,
-            //     &response.includes,
-            // )),
-            // components: Some(normalize_components(
-            //     &main_page_entry.fields.components,
-            //     &response.includes,
-            // )),
-            components: None,
-        },
+        Some(main_page_entry) => {
+            NormalizeResponseResult {
+                slug: main_page_entry.fields.slug,
+                labels: normalize_labels(&main_page_entry.fields.labels, &response.includes),
+                // configs: normalize_configs(
+                //     &main_page_entry.fields.configs,
+                //     &response.includes,
+                // ),
+                configs: HashMap::new(),
+                components: HashMap::new(),
+                // components: Some(normalize_components(
+                //     &main_page_entry.fields.components,
+                //     &response.includes,
+                // )),
+            }
+        }
         None => NormalizeResponseResult {
-            slug: None,
-            labels: None,
-            configs: None,
-            components: None,
+            slug: "",
+            labels: HashMap::new(),
+            configs: HashMap::new(),
+            components: HashMap::new(),
         },
     }
 }

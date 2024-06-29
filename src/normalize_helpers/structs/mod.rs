@@ -1,6 +1,9 @@
 use core::fmt;
 
-use serde::{Deserialize, Deserializer, Serialize, de::{self, Visitor, MapAccess}};
+use serde::{
+    de::{self, MapAccess, Visitor},
+    Deserialize, Deserializer, Serialize,
+};
 use serde_json::Value;
 pub mod common_structs;
 pub mod includes_structs;
@@ -18,7 +21,7 @@ pub struct IncludesEntry<'a> {
     pub fields: IncludesFields<'a>,
 }
 
-impl<'de:'a,'a> Deserialize<'de> for IncludesEntry<'a> {
+impl<'de: 'a, 'a> Deserialize<'de> for IncludesEntry<'a> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -49,34 +52,46 @@ impl<'de:'a,'a> Deserialize<'de> for IncludesEntry<'a> {
                                 return Err(de::Error::duplicate_field("metadata"));
                             }
                             metadata = Some(map.next_value()?);
-                        },
+                        }
                         "sys" => {
                             if sys.is_some() {
                                 return Err(de::Error::duplicate_field("sys"));
                             }
                             sys = Some(map.next_value()?);
-                        },
+                        }
                         "fields" => {
                             if fields.is_some() {
                                 return Err(de::Error::duplicate_field("fields"));
                             }
                             fields = Some(map.next_value()?);
-                        },
+                        }
                         // _ => return Err(de::Error::unknown_field(key, FIELDS)),
                         _ => {}
                     }
                 }
 
-                let metadata = metadata.ok_or_else(|| de::Error::missing_field("IncludesEntry_metadata"))?;
+                let metadata =
+                    metadata.ok_or_else(|| de::Error::missing_field("IncludesEntry_metadata"))?;
                 let sys = sys.ok_or_else(|| de::Error::missing_field("IncludesEntry_sys"))?;
-                let fields = fields.ok_or_else(|| de::Error::missing_field("IncludesEntry_fields"))?;
+                let fields =
+                    fields.ok_or_else(|| de::Error::missing_field("IncludesEntry_fields"))?;
 
-                Ok(IncludesEntry { metadata, sys, fields })
+                Ok(IncludesEntry {
+                    metadata,
+                    sys,
+                    fields,
+                })
             }
         }
 
         const FIELDS: &'static [&'static str] = &["sys", "fields"];
-        deserializer.deserialize_struct("IncludesEntry", FIELDS, IncludesEntryVisitor { marker: std::marker::PhantomData })
+        deserializer.deserialize_struct(
+            "IncludesEntry",
+            FIELDS,
+            IncludesEntryVisitor {
+                marker: std::marker::PhantomData,
+            },
+        )
     }
 }
 
@@ -118,34 +133,45 @@ impl<'de: 'a, 'a> Deserialize<'de> for ItemEntry<'a> {
                                 return Err(de::Error::duplicate_field("metadata"));
                             }
                             metadata = Some(map.next_value()?);
-                        },
+                        }
                         "sys" => {
                             if sys.is_some() {
                                 return Err(de::Error::duplicate_field("sys"));
                             }
                             sys = Some(map.next_value()?);
-                        },
+                        }
                         "fields" => {
                             if fields.is_some() {
                                 return Err(de::Error::duplicate_field("fields"));
                             }
                             fields = Some(map.next_value()?);
-                        },
+                        }
                         // _ => return Err(de::Error::unknown_field(key, FIELDS)),
                         _ => {}
                     }
                 }
 
-                let metadata = metadata.ok_or_else(|| de::Error::missing_field("ItemEntry_metadata"))?;
+                let metadata =
+                    metadata.ok_or_else(|| de::Error::missing_field("ItemEntry_metadata"))?;
                 let sys = sys.ok_or_else(|| de::Error::missing_field("ItemEntry_sys"))?;
                 let fields = fields.ok_or_else(|| de::Error::missing_field("ItemEntry_fields"))?;
 
-                Ok(ItemEntry { metadata, sys, fields })
+                Ok(ItemEntry {
+                    metadata,
+                    sys,
+                    fields,
+                })
             }
         }
 
-        const FIELDS: &'static [&'static str] = &["metadata","sys", "fields"];
-        deserializer.deserialize_struct("ItemEntry", FIELDS, ItemEntryVisitor { marker: std::marker::PhantomData })
+        const FIELDS: &'static [&'static str] = &["metadata", "sys", "fields"];
+        deserializer.deserialize_struct(
+            "ItemEntry",
+            FIELDS,
+            ItemEntryVisitor {
+                marker: std::marker::PhantomData,
+            },
+        )
     }
 }
 
@@ -187,27 +213,35 @@ impl<'de: 'a, 'a> Deserialize<'de> for ContentfulIncludes<'a> {
                                 return Err(de::Error::duplicate_field("Entry"));
                             }
                             entries = Some(map.next_value()?);
-                        },
+                        }
                         "Asset" => {
                             if assets.is_some() {
                                 return Err(de::Error::duplicate_field("Asset"));
                             }
                             assets = Some(map.next_value()?);
-                        },                       
+                        }
                         // _ => return Err(de::Error::unknown_field(key, FIELDS)),
                         _ => {}
                     }
                 }
 
-                let entries = entries.ok_or_else(|| de::Error::missing_field("ContentfulIncludes_entries"))?;
-                let assets = assets.ok_or_else(|| de::Error::missing_field("ContentfulIncludes_assets"))?;
+                let entries = entries
+                    .ok_or_else(|| de::Error::missing_field("ContentfulIncludes_entries"))?;
+                let assets =
+                    assets.ok_or_else(|| de::Error::missing_field("ContentfulIncludes_assets"))?;
 
                 Ok(ContentfulIncludes { entries, assets })
             }
         }
 
-        const FIELDS: &'static [&'static str] = &["entries","assets"];
-        deserializer.deserialize_struct("ContentfulIncludes", FIELDS, ContentfulIncludesVisitor { marker: std::marker::PhantomData })
+        const FIELDS: &'static [&'static str] = &["entries", "assets"];
+        deserializer.deserialize_struct(
+            "ContentfulIncludes",
+            FIELDS,
+            ContentfulIncludesVisitor {
+                marker: std::marker::PhantomData,
+            },
+        )
     }
 }
 
@@ -236,7 +270,7 @@ impl<'de: 'a, 'a> Deserialize<'de> for ContentfulItems<'a> {
             where
                 V: MapAccess<'de>,
             {
-                let mut entries = None;                
+                let mut entries = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -245,20 +279,27 @@ impl<'de: 'a, 'a> Deserialize<'de> for ContentfulItems<'a> {
                                 return Err(de::Error::duplicate_field("entries"));
                             }
                             entries = Some(map.next_value()?);
-                        },   
+                        }
                         // _ => return Err(de::Error::unknown_field(key, FIELDS)),
                         _ => {}
                     }
                 }
 
-                let entries = entries.ok_or_else(|| de::Error::missing_field("ContentfulItems_entries"))?;
+                let entries =
+                    entries.ok_or_else(|| de::Error::missing_field("ContentfulItems_entries"))?;
 
                 Ok(ContentfulItems { entries })
             }
         }
 
         const FIELDS: &'static [&'static str] = &["entries"];
-        deserializer.deserialize_struct("ContentfulItems", FIELDS, ContentfulItemsVisitor { marker: std::marker::PhantomData })
+        deserializer.deserialize_struct(
+            "ContentfulItems",
+            FIELDS,
+            ContentfulItemsVisitor {
+                marker: std::marker::PhantomData,
+            },
+        )
     }
 }
 
@@ -292,11 +333,11 @@ impl<'de: 'a, 'a> Deserialize<'de> for ContentfulResponse<'a> {
             where
                 V: MapAccess<'de>,
             {
-                let mut _sys= None;
-                let mut total= None;
-                let mut skip= None;
-                let mut limit= None;
-                let mut items= None;
+                let mut _sys = None;
+                let mut total = None;
+                let mut skip = None;
+                let mut limit = None;
+                let mut items = None;
                 let mut includes = None;
 
                 while let Some(key) = map.next_key()? {
@@ -306,53 +347,73 @@ impl<'de: 'a, 'a> Deserialize<'de> for ContentfulResponse<'a> {
                                 return Err(de::Error::duplicate_field("sys"));
                             }
                             _sys = Some(map.next_value()?);
-                        },
+                        }
                         "total" => {
                             if total.is_some() {
                                 return Err(de::Error::duplicate_field("total"));
                             }
                             total = Some(map.next_value()?);
-                        },
+                        }
                         "skip" => {
                             if skip.is_some() {
                                 return Err(de::Error::duplicate_field("skip"));
                             }
                             skip = Some(map.next_value()?);
-                        },
+                        }
                         "limit" => {
                             if limit.is_some() {
                                 return Err(de::Error::duplicate_field("limit"));
                             }
                             limit = Some(map.next_value()?);
-                        },
+                        }
                         "items" => {
                             if items.is_some() {
                                 return Err(de::Error::duplicate_field("items"));
                             }
                             items = Some(map.next_value()?);
-                        },
+                        }
                         "includes" => {
                             if includes.is_some() {
                                 return Err(de::Error::duplicate_field("includes"));
                             }
                             includes = Some(map.next_value()?);
-                        },                                                
+                        }
                         // _ => return Err(de::Error::unknown_field(key, FIELDS)),
                         _ => {}
                     }
                 }
-                let _sys = _sys.ok_or_else(|| de::Error::missing_field("ContentfulResponse_sys"))?;
-                let total = total.ok_or_else(|| de::Error::missing_field("ContentfulResponse_total"))?;
-                let skip = skip.ok_or_else(|| de::Error::missing_field("ContentfulResponse_skip"))?;
-                let limit = limit.ok_or_else(|| de::Error::missing_field("ContentfulResponse_limit"))?;
-                let items = items.ok_or_else(|| de::Error::missing_field("ContentfulResponse_items"))?;
-                let includes = includes.ok_or_else(|| de::Error::missing_field("ContentfulResponse_includes"))?;
+                let _sys =
+                    _sys.ok_or_else(|| de::Error::missing_field("ContentfulResponse_sys"))?;
+                let total =
+                    total.ok_or_else(|| de::Error::missing_field("ContentfulResponse_total"))?;
+                let skip =
+                    skip.ok_or_else(|| de::Error::missing_field("ContentfulResponse_skip"))?;
+                let limit =
+                    limit.ok_or_else(|| de::Error::missing_field("ContentfulResponse_limit"))?;
+                let items =
+                    items.ok_or_else(|| de::Error::missing_field("ContentfulResponse_items"))?;
+                let includes = includes
+                    .ok_or_else(|| de::Error::missing_field("ContentfulResponse_includes"))?;
 
-                Ok(ContentfulResponse { sys: _sys, total, skip , limit, items, includes })
+                Ok(ContentfulResponse {
+                    sys: _sys,
+                    total,
+                    skip,
+                    limit,
+                    items,
+                    includes,
+                })
             }
         }
 
-        const FIELDS: &'static [&'static str] = &["sys","total", "skip", "limit", "items", "includes"];
-        deserializer.deserialize_struct("ContentfulResponse", FIELDS, ContentfulResponseVisitor { marker: std::marker::PhantomData })
+        const FIELDS: &'static [&'static str] =
+            &["sys", "total", "skip", "limit", "items", "includes"];
+        deserializer.deserialize_struct(
+            "ContentfulResponse",
+            FIELDS,
+            ContentfulResponseVisitor {
+                marker: std::marker::PhantomData,
+            },
+        )
     }
 }

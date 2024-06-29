@@ -1,13 +1,15 @@
+use crate::normalize_helpers::structs::common_structs::ChildSysInner;
+
 use super::common_structs::ChildSys;
 use serde::{
-    de::{self, MapAccess, SeqAccess, Visitor},
+    de::{MapAccess, SeqAccess, Visitor},
     Deserialize, Deserializer, Serialize,
 };
 use std::fmt;
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(untagged)]
-pub enum Item<T:Clone+Copy> {
+pub enum Item<T: Clone + Copy> {
     Single(T),
     Multiple(Vec<T>),
 }
@@ -59,19 +61,13 @@ impl<'de> Deserialize<'de> for Item<ChildSys<'de>> {
 
 #[derive(Clone, Debug, Serialize)]
 pub struct ItemsFields<'a> {
-    pub slug: Option<&'a str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub title: Option<&'a str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub components: Option<Item<ChildSys<'a>>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub labels: Option<Item<ChildSys<'a>>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub configs: Option<Item<ChildSys<'a>>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub images: Option<Item<ChildSys<'a>>>,
-    #[serde(rename = "visitorState",skip_serializing_if = "Option::is_none")]
-    pub visitor_state: Option<Item<ChildSys<'a>>>,
+    pub slug: &'a str,
+    pub title: &'a str,
+    pub components: Item<ChildSys<'a>>,
+    pub labels: Item<ChildSys<'a>>,
+    pub configs: Item<ChildSys<'a>>,
+    pub images: Item<ChildSys<'a>>,
+    pub visitor_state: Item<ChildSys<'a>>,
 }
 
 impl<'de: 'a, 'a> Deserialize<'de> for ItemsFields<'a> {
@@ -94,70 +90,78 @@ impl<'de: 'a, 'a> Deserialize<'de> for ItemsFields<'a> {
             where
                 V: MapAccess<'de>,
             {
-                let mut slug = None;
-                let mut title = None;
-                let mut components = None;
-                let mut labels = None;
-                let mut configs = None;
-                let mut images = None;
-                let mut visitor_state = None;
+                let mut slug = "";
+                let mut title = "";
+                let mut components = Item::Single(ChildSys {
+                    sys: ChildSysInner {
+                        id: "",
+                        link_type: "",
+                        object_type: "",
+                    },
+                });
+                let mut labels = Item::Single(ChildSys {
+                    sys: ChildSysInner {
+                        id: "",
+                        link_type: "",
+                        object_type: "",
+                    },
+                });
+                let mut configs = Item::Single(ChildSys {
+                    sys: ChildSysInner {
+                        id: "",
+                        link_type: "",
+                        object_type: "",
+                    },
+                });
+                let mut images = Item::Single(ChildSys {
+                    sys: ChildSysInner {
+                        id: "",
+                        link_type: "",
+                        object_type: "",
+                    },
+                });
+                let mut visitor_state = Item::Single(ChildSys {
+                    sys: ChildSysInner {
+                        id: "",
+                        link_type: "",
+                        object_type: "",
+                    },
+                });
 
                 while let Some(key) = map.next_key()? {
                     match key {
                         "slug" => {
-                            if slug.is_some() {
-                                return Err(de::Error::duplicate_field("slug"));
-                            }
-                            slug = Some(map.next_value()?);
+                            slug = map.next_value()?;
                         }
                         "title" => {
-                            if title.is_some() {
-                                return Err(de::Error::duplicate_field("title"));
-                            }
-                            title = Some(map.next_value()?);
+                            title = map.next_value()?;
                         }
                         "components" => {
-                            if components.is_some() {
-                                return Err(de::Error::duplicate_field("components"));
-                            }
-                            components = Some(map.next_value()?);
+                            components = map.next_value()?;
                         }
                         "labels" => {
-                            if labels.is_some() {
-                                return Err(de::Error::duplicate_field("labels"));
-                            }
-                            labels = Some(map.next_value()?);
+                            labels = map.next_value()?;
                         }
                         "configs" => {
-                            if configs.is_some() {
-                                return Err(de::Error::duplicate_field("configs"));
-                            }
-                            configs = Some(map.next_value()?);
+                            configs = map.next_value()?;
                         }
                         "images" => {
-                            if images.is_some() {
-                                return Err(de::Error::duplicate_field("images"));
-                            }
-                            images = Some(map.next_value()?);
-                        },
+                            images = map.next_value()?;
+                        }
                         "visitorState" => {
-                            if visitor_state.is_some() {
-                                return Err(de::Error::duplicate_field("visitorState"));
-                            }
-                            visitor_state = Some(map.next_value()?);
+                            visitor_state = map.next_value()?;
                         }
                         // _ => return Err(de::Error::unknown_field(key, FIELDS)),
                         _ => {}
                     }
                 }
-                let slug = slug.unwrap_or_else(|| None);
-                let title = title.unwrap_or_else(|| None);
-                let components =
-                    components.unwrap_or_else(|| None);
-                let labels = labels.unwrap_or_else(|| None);
-                let configs = configs.unwrap_or_else(|| None);
-                let images = images.unwrap_or_else(|| None);
-                let visitor_state = visitor_state.unwrap_or_else(|| None);
+                let slug = slug;
+                let title = title;
+                let components = components;
+                let labels = labels;
+                let configs = configs;
+                let images = images;
+                let visitor_state = visitor_state;
 
                 Ok(ItemsFields {
                     slug,
@@ -166,7 +170,7 @@ impl<'de: 'a, 'a> Deserialize<'de> for ItemsFields<'a> {
                     labels,
                     configs,
                     images,
-                    visitor_state
+                    visitor_state,
                 })
             }
         }
