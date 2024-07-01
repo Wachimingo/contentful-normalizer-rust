@@ -1,7 +1,7 @@
 use structs::{
     common_structs::ChildSys,
     includes_structs::Data,
-    result_structs::{NormalizeResponseResult, ParsedFieldsResult, ParsedIncludesEntryResult},
+    result_structs::{NormalizeResponseResult, ParsedIncludesEntryResult},
     ContentfulResponse, IncludesEntry, ItemEntry,
 };
 
@@ -22,8 +22,7 @@ pub fn process_item<'a>(
     let mut items_collector: HashMap<&'a str, Vec<ParsedIncludesEntry<'a>>> = HashMap::new();
     match item {
         Item::Single(item) => {
-            let result =
-                find_and_insert(item.sys.link_type, item.sys.id, key, includes);
+            let result = find_and_insert(item.sys.link_type, item.sys.id, key, includes);
             match result {
                 Some(record) => {
                     match items_collector.get_mut(key) {
@@ -67,10 +66,10 @@ pub fn process_item<'a>(
 }
 
 pub fn parse_data<'a>(
-    includes_entry: &'a IncludesEntry<'a>,
+    includes_entry: IncludesEntry<'a>,
     key: &'a str,
     includes: Rc<ContentfulIncludes<'a>>,
-) -> ParsedIncludesEntryResult<'a> {    
+) -> ParsedIncludesEntryResult<'a> {
     ParsedIncludesEntryResult {
         slug: includes_entry.fields.slug,
         title: includes_entry.fields.title,
@@ -110,11 +109,7 @@ pub fn parse_data<'a>(
             key,
             includes.clone(),
         ),
-        images: process_item(
-            includes_entry.fields.images.to_owned(),
-            key,
-            includes,
-        ),
+        images: process_item(includes_entry.fields.images.to_owned(), key, includes),
     }
 }
 
@@ -124,10 +119,13 @@ pub fn find_and_insert<'a>(
     key: &'a str,
     includes: Rc<ContentfulIncludes<'a>>,
 ) -> Option<ParsedIncludesEntry<'a>> {
-    let entry: Option<&IncludesEntry<'a>> = includes.entries.iter().find(|&entry| entry.sys.id == id);
-    match entry {
-        Some(entry) => {
-            if link_type == "Asset" {
+    if link_type == "Asset" {
+        let entry = includes
+            .assets
+            .iter()
+            .find(|entry| entry.sys.id == id);
+        match entry {
+            Some(entry) => {
                 let parse_asset = ParsedIncludesAssetEntry {
                     slug: entry.fields.slug,
                     title: entry.fields.title,
@@ -141,22 +139,28 @@ pub fn find_and_insert<'a>(
                     confirmation_text: entry.fields.confirmation_text,
                     error_text: entry.fields.error_text,
                     confirm_button_text: entry.fields.confirm_button_text,
-                    url: "",
-                    // url: entry
-                    //     .fields
-                    //     .file
-                    //     .as_ref()
-                    //     .and_then(|file| file.url),
+                    url: entry
+                        .fields
+                        .file
+                        .url,
                     file: entry.fields.file.to_owned(),
                 };
                 return Some(ParsedIncludesEntry::Asset(parse_asset));
-            } else {
-                let record = parse_data(entry, key, Rc::clone(&includes));
-                // return Some(ParsedIncludesEntry::Entry(record));
-                return None;
             }
+            None => None,
         }
-        None => None,
+    } else {
+        let entry = includes
+            .entries
+            .iter()
+            .find(|entry| entry.sys.id == id);
+        match entry {
+            Some(entry)=> {                
+                let record = parse_data(entry.to_owned(), key, Rc::clone(&includes));
+                return Some(ParsedIncludesEntry::Entry(record));
+            },
+            None => None
+        }        
     }
 }
 
@@ -257,9 +261,9 @@ pub fn normalize_components<'a: 'b, 'b>(
                     record.insert(
                         to_camel_case(entry.fields.slug),
                         process_item(
-                            Item::Single(component.clone()),
+                            Item::Single(component.to_owned()),
                             "components",
-                            Rc::clone(&includes),
+                            includes.clone(),
                         ),
                     );
                 }
@@ -277,9 +281,9 @@ pub fn normalize_components<'a: 'b, 'b>(
                         record.insert(
                             to_camel_case(entry.fields.slug),
                             process_item(
-                                Item::Single(component.clone()),
+                                Item::Single(component.to_owned()),
                                 "components",
-                                Rc::clone(&includes),
+                                includes.clone(),
                             ),
                         );
                     }
