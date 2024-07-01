@@ -30,9 +30,12 @@ pub struct FileDetails {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct File<'a> {
+    #[serde(default)]
     pub url: &'a str,
     pub details: FileDetails,
+    #[serde(default)]
     pub file_name: &'a str,
+    #[serde(default)]
     pub content_type: &'a str,
 }
 

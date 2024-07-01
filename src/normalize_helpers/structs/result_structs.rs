@@ -84,6 +84,6 @@ pub struct ParsedFieldsResult<'a> {
 pub struct NormalizeResponseResult<'a> {
     pub slug: &'a str,
     pub labels: HashMap<String, &'a str>,
-    pub configs: HashMap<String, &'a Data>,
+    pub configs: HashMap<String, Data>,
     pub components: HashMap<String, Vec<ParsedIncludesEntry<'a>>>,
 }
