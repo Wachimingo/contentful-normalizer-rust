@@ -1,28 +1,25 @@
 #![allow(dead_code, unused_variables, unused_mut)]
 use structs::{
-    includes_structs::Data,
-    result_structs::{NormalizeResponseResult, ParsedFieldsResult, ParsedIncludesEntryResult},
-    ContentfulResponse, IncludesEntry,
+    common_structs::ChildSys, includes_structs::Data, result_structs::{NormalizeResponseResult, ParsedFieldsResult, ParsedIncludesEntryResult}, ContentfulResponse, IncludesEntry
 };
 
 use crate::string_helpers::to_camel_case;
 use std::collections::HashMap;
 pub mod structs;
 use self::structs::{
-    items_structs::Item,
     result_structs::{ParsedIncludesAssetEntry, ParsedIncludesEntry},
     ContentfulIncludes,
 };
 
-pub fn process_item(
-    item: Option<Item>,
+pub fn process_items_arr(
+    items: Option<Vec<ChildSys>>,
     key: &str,
     includes: &ContentfulIncludes,
 ) -> Option<Vec<ParsedIncludesEntry>> {
     let mut items_collector: HashMap<String, Vec<ParsedIncludesEntry>> = HashMap::new();
-    match item {
-        Some(value) => match value {
-            Item::Single(item) => {
+    match items {
+        Some(items) => {
+            for item in items {
                 find_and_insert(
                     &item.sys.link_type,
                     &item.sys.id,
@@ -31,17 +28,36 @@ pub fn process_item(
                     &mut items_collector,
                 );
             }
-            Item::Multiple(items) => {
-                for item in items {
-                    find_and_insert(
-                        &item.sys.link_type,
-                        &item.sys.id,
-                        &key,
-                        &includes,
-                        &mut items_collector,
-                    );
-                }
-            }
+        },
+        None => {}
+    };
+    let item_arr = items_collector
+        .values()
+        .cloned()
+        .flatten()
+        .collect::<Vec<ParsedIncludesEntry>>();
+    if item_arr.is_empty() {
+        None
+    } else {
+        Some(item_arr)
+    }
+}
+
+pub fn process_items(
+    item: Option<ChildSys>,
+    key: &str,
+    includes: &ContentfulIncludes,
+) -> Option<Vec<ParsedIncludesEntry>> {
+    let mut items_collector: HashMap<String, Vec<ParsedIncludesEntry>> = HashMap::new();
+    match item {
+        Some(item) => {
+            find_and_insert(
+                &item.sys.link_type,
+                &item.sys.id,
+                &key,
+                &includes,
+                &mut items_collector,
+            );
         },
         None => {}
     };
@@ -69,8 +85,8 @@ pub fn find_data(
         text: includes_entry.fields.text.clone(),
         link: includes_entry.fields.link.clone(),
         data: includes_entry.fields.data.clone(),
-        fallback_image: process_item(includes_entry.fields.fallback_image.clone(), key, includes),
-        common_terms_and_conditions_items: process_item(
+        fallback_image: process_items(includes_entry.fields.fallback_image.clone(), key, includes),
+        common_terms_and_conditions_items: process_items_arr(
             includes_entry
                 .fields
                 .common_terms_and_conditions_items
@@ -82,10 +98,10 @@ pub fn find_data(
         error_text: includes_entry.fields.error_text.clone(),
         confirm_button_text: includes_entry.fields.confirm_button_text.clone(),
         file: None,
-        components: process_item(includes_entry.fields.components.clone(), key, includes),
-        labels: process_item(includes_entry.fields.labels.clone(), key, includes),
-        configs: process_item(includes_entry.fields.configs.clone(), key, includes),
-        images: process_item(includes_entry.fields.images.clone(), key, includes),
+        components: process_items_arr(includes_entry.fields.components.clone(), key, includes),
+        labels: process_items_arr(includes_entry.fields.labels.clone(), key, includes),
+        configs: process_items_arr(includes_entry.fields.configs.clone(), key, includes),
+        images: process_items_arr(includes_entry.fields.images.clone(), key, includes),
     };
     parsed_result
 }
@@ -153,32 +169,19 @@ pub fn parse_fields(entry: IncludesEntry, includes: &ContentfulIncludes) -> Pars
     ParsedFieldsResult {
         title: entry.fields.title,
         slug: entry.fields.slug,
-        components: process_item(entry.fields.components.clone(), "components", includes),
-        labels: process_item(entry.fields.labels.clone(), "labels", includes),
-        configs: process_item(entry.fields.configs.clone(), "configs", includes),
+        components: process_items_arr(entry.fields.components.clone(), "components", includes),
+        labels: process_items_arr(entry.fields.labels.clone(), "labels", includes),
+        configs: process_items_arr(entry.fields.configs.clone(), "configs", includes),
     }
 }
 
-pub fn normalize_labels(labels: Item, includes: ContentfulIncludes) -> HashMap<String, String> {
+pub fn normalize_labels(labels: Vec<ChildSys>, includes: ContentfulIncludes) -> HashMap<String, String> {
     let mut record: HashMap<String, String> = HashMap::new();
-    match labels {
-        Item::Single(label) => {
-            for entry in &includes.entries {
-                if label.sys.id == entry.sys.id {
-                    if let Some(ref text) = entry.fields.text {
-                        record.insert(to_camel_case(&entry.fields.slug), text.clone());
-                    }
-                }
-            }
-        }
-        Item::Multiple(labels) => {
-            for label in labels {
-                for entry in &includes.entries {
-                    if label.sys.id == entry.sys.id {
-                        if let Some(ref text) = entry.fields.text {
-                            record.insert(to_camel_case(&entry.fields.slug), text.clone());
-                        }
-                    }
+    for label in labels {
+        for entry in &includes.entries {
+            if label.sys.id == entry.sys.id {
+                if let Some(ref text) = entry.fields.text {
+                    record.insert(to_camel_case(&entry.fields.slug), text.clone());
                 }
             }
         }
@@ -186,28 +189,14 @@ pub fn normalize_labels(labels: Item, includes: ContentfulIncludes) -> HashMap<S
     return record;
 }
 
-pub fn normalize_configs(configs: Item, includes: ContentfulIncludes) -> HashMap<String, Data> {
+pub fn normalize_configs(configs: Vec<ChildSys>, includes: ContentfulIncludes) -> HashMap<String, Data> {
     let mut record: HashMap<String, Data> = HashMap::new();
-    match configs {
-        Item::Single(config) => {
-            for entry in &includes.entries {
-                if config.sys.id == entry.sys.id {
-                    // This way allows for coping the struct values, compared to match statement where data couldn't be moved
-                    if let Some(ref data) = entry.fields.data {
-                        record.insert(to_camel_case(&entry.fields.slug), data.clone());
-                    }
-                }
-            }
-        }
-        Item::Multiple(configs) => {
-            for config in configs {
-                for entry in &includes.entries {
-                    if config.sys.id == entry.sys.id {
-                        // This way allows for coping the struct values, compared to match statement where data couldn't be moved
-                        if let Some(ref data) = entry.fields.data {
-                            record.insert(to_camel_case(&entry.fields.slug), data.clone());
-                        }
-                    }
+    for config in configs {
+        for entry in &includes.entries {
+            if config.sys.id == entry.sys.id {
+                // This way allows for coping the struct values, compared to match statement where data couldn't be moved
+                if let Some(ref data) = entry.fields.data {
+                    record.insert(to_camel_case(&entry.fields.slug), data.clone());
                 }
             }
         }
@@ -216,30 +205,19 @@ pub fn normalize_configs(configs: Item, includes: ContentfulIncludes) -> HashMap
 }
 
 pub fn normalize_components(
-    components: Option<Item>,
+    components: Option<Vec<ChildSys>>,
     includes: ContentfulIncludes,
 ) -> HashMap<String, Option<Vec<ParsedIncludesEntry>>> {
     let mut record: HashMap<String, Option<Vec<ParsedIncludesEntry>>> = HashMap::new();
     match components {
         Some(components) => {
-            match components {
-                Item::Single(component) => {
-                    let entry = includes.entries.clone().into_iter().find(|entry| entry.sys.id == component.sys.id).unwrap();
-                    record.insert(
-                        to_camel_case(&entry.fields.slug),
-                        process_item(Some(Item::Single(component)), "components", &includes)
-                    );
-                },
-                Item::Multiple(components) => {
-                    for component in components {
-                        let entry = includes.entries.clone().into_iter().find(|entry| entry.sys.id == component.sys.id).unwrap();
-                        record.insert(
-                            to_camel_case(&entry.fields.slug),
-                            process_item(Some(Item::Single(component)), "components", &includes)
-                        );
-                    };
-                }
-            }
+            for component in components {
+                let entry = includes.entries.clone().into_iter().find(|entry| entry.sys.id == component.sys.id).unwrap();
+                record.insert(
+                    to_camel_case(&entry.fields.slug),
+                    process_items(Some(component), "components", &includes)
+                );
+            };
         },
         None => {},
     }    
