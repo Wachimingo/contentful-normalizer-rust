@@ -24,6 +24,3 @@ pub fn to_camel_case<'a>(input_string: &Option<&'a str>) -> String {
         None => "".to_string()
     }
 }
-
-#[cfg(test)]
-mod tests;

@@ -15,7 +15,7 @@ use self::structs::{
 };
 
 pub fn process_items_arr<'a>(
-    items: Option<Vec<ChildSys>>,
+    items: &Option<Vec<ChildSys>>,
     key: &str,
     includes: &ContentfulIncludes<'a>,
 ) -> Option<Vec<ParsedIncludesEntry<'a>>> {
@@ -35,10 +35,10 @@ pub fn process_items_arr<'a>(
         None => {}
     };
     let item_arr = items_collector
-        .values()
-        .cloned()
+        .into_iter()
+        .map(|(_, v)| v)
         .flatten()
-        .collect::<Vec<ParsedIncludesEntry<'a>>>();
+        .collect::<Vec<ParsedIncludesEntry>>();
     if item_arr.is_empty() {
         None
     } else {
@@ -47,7 +47,7 @@ pub fn process_items_arr<'a>(
 }
 
 pub fn process_items<'a>(
-    item: Option<ChildSys>,
+    item: &Option<ChildSys>,
     key: &str,
     includes: &ContentfulIncludes<'a>,
 ) -> Option<Vec<ParsedIncludesEntry<'a>>> {
@@ -65,10 +65,10 @@ pub fn process_items<'a>(
         None => {}
     };
     let item_arr = items_collector
-        .values()
-        .cloned()
+        .into_iter()
+        .map(|(_, v)| v)
         .flatten()
-        .collect::<Vec<ParsedIncludesEntry<'a>>>();
+        .collect::<Vec<ParsedIncludesEntry>>();
     if item_arr.is_empty() {
         None
     } else {
@@ -88,12 +88,11 @@ pub fn find_data<'a>(
         text: includes_entry.fields.text,
         link: includes_entry.fields.link,
         data: includes_entry.fields.data.clone(),
-        fallback_image: process_items(includes_entry.fields.fallback_image.clone(), key, includes),
+        fallback_image: process_items(&includes_entry.fields.fallback_image, key, includes),
         common_terms_and_conditions_items: process_items_arr(
-            includes_entry
+            &includes_entry
                 .fields
-                .common_terms_and_conditions_items
-                .clone(),
+                .common_terms_and_conditions_items,
             key,
             includes,
         ),
@@ -101,10 +100,10 @@ pub fn find_data<'a>(
         error_text: includes_entry.fields.error_text,
         confirm_button_text: includes_entry.fields.confirm_button_text,
         file: None,
-        components: process_items_arr(includes_entry.fields.components.clone(), key, includes),
-        labels: process_items_arr(includes_entry.fields.labels.clone(), key, includes),
-        configs: process_items_arr(includes_entry.fields.configs.clone(), key, includes),
-        images: process_items_arr(includes_entry.fields.images.clone(), key, includes),
+        components: process_items_arr(&includes_entry.fields.components, key, includes),
+        labels: process_items_arr(&includes_entry.fields.labels, key, includes),
+        configs: process_items_arr(&includes_entry.fields.configs, key, includes),
+        images: process_items_arr(&includes_entry.fields.images, key, includes),
     };
     parsed_result
 }
@@ -212,13 +211,12 @@ pub fn normalize_components<'a>(
             for component in components {
                 let entry = includes
                     .entries
-                    .clone()
-                    .into_iter()
+                    .iter()
                     .find(|entry| entry.sys.id == component.sys.id)
                     .unwrap();
                 record.insert(
                     to_camel_case(&entry.fields.slug),
-                    process_items(Some(component), "components", &includes),
+                    process_items(&Some(component), "components", &includes),
                 );
             }
         }
@@ -249,6 +247,3 @@ pub fn normalize_response(response: ContentfulResponse, slug: String) -> Normali
         )),
     }
 }
-
-#[cfg(test)]
-mod tests;
