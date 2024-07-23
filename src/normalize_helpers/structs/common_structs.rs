@@ -29,24 +29,20 @@ pub struct ContentType {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct TopLevelSys {
-    pub id: String,
+pub struct TopLevelSys<'a> {
+    pub id: &'a str,
     pub space: Space,
     #[serde(rename = "type")]
-    pub object_type: String,
+    pub object_type: &'a str,
     #[serde(rename = "createdAt")]
-    pub created_at: String,
+    pub created_at: &'a str,
     #[serde(rename = "updatedAt")]
-    pub updated_at: String,
+    pub updated_at: &'a str,
     pub environment: Environment,
     pub revision: u8,
     #[serde(rename = "contentType")]
     pub content_type: Option<ContentType>,
-    pub locale: String,
-}
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct ContentfulEntity {
-    pub sys: TopLevelSys,
+    pub locale: &'a str,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

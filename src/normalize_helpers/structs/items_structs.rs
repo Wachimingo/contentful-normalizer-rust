@@ -1,12 +1,10 @@
 use super::common_structs::ChildSys;
 use serde::{Serialize, Deserialize};
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct ItemsFields {
-    pub slug: String,
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub seo: Option<serde_json::Map<String, Value>>,
+pub struct ItemsFields<'a> {
+    pub slug: &'a str,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub title: Option<String>,
+    pub title: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub components: Option<Vec<ChildSys>>,
     #[serde(skip_serializing_if = "Option::is_none")]

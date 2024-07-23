@@ -1,6 +1,6 @@
 #![allow(dead_code, unused_variables, unused_mut)]
 use structs::{
-    common_structs::ChildSys, includes_structs::Data, result_structs::{NormalizeResponseResult, ParsedFieldsResult, ParsedIncludesEntryResult}, ContentfulResponse, IncludesEntry
+    common_structs::ChildSys, includes_structs::Data, result_structs::{NormalizeResponseResult, ParsedIncludesEntryResult}, ContentfulResponse, IncludesEntry
 };
 
 use crate::string_helpers::to_camel_case;
@@ -11,11 +11,11 @@ use self::structs::{
     ContentfulIncludes,
 };
 
-pub fn process_items_arr(
+pub fn process_items_arr<'a>(
     items: Option<Vec<ChildSys>>,
     key: &str,
-    includes: &ContentfulIncludes,
-) -> Option<Vec<ParsedIncludesEntry>> {
+    includes: ContentfulIncludes<'a>,
+) -> Option<Vec<ParsedIncludesEntry<'a>>> {
     let mut items_collector: HashMap<String, Vec<ParsedIncludesEntry>> = HashMap::new();
     match items {
         Some(items) => {
@@ -24,7 +24,7 @@ pub fn process_items_arr(
                     &item.sys.link_type,
                     &item.sys.id,
                     &key,
-                    &includes,
+                    includes.clone(),
                     &mut items_collector,
                 );
             }
@@ -35,7 +35,7 @@ pub fn process_items_arr(
         .values()
         .cloned()
         .flatten()
-        .collect::<Vec<ParsedIncludesEntry>>();
+        .collect::<Vec<ParsedIncludesEntry<'a>>>();
     if item_arr.is_empty() {
         None
     } else {
@@ -43,11 +43,11 @@ pub fn process_items_arr(
     }
 }
 
-pub fn process_items(
+pub fn process_items<'a>(
     item: Option<ChildSys>,
     key: &str,
-    includes: &ContentfulIncludes,
-) -> Option<Vec<ParsedIncludesEntry>> {
+    includes: ContentfulIncludes<'a>,
+) -> Option<Vec<ParsedIncludesEntry<'a>>> {
     let mut items_collector: HashMap<String, Vec<ParsedIncludesEntry>> = HashMap::new();
     match item {
         Some(item) => {
@@ -55,7 +55,7 @@ pub fn process_items(
                 &item.sys.link_type,
                 &item.sys.id,
                 &key,
-                &includes,
+                includes.clone(),
                 &mut items_collector,
             );
         },
@@ -65,7 +65,7 @@ pub fn process_items(
         .values()
         .cloned()
         .flatten()
-        .collect::<Vec<ParsedIncludesEntry>>();
+        .collect::<Vec<ParsedIncludesEntry<'a>>>();
     if item_arr.is_empty() {
         None
     } else {
@@ -73,62 +73,62 @@ pub fn process_items(
     }
 }
 
-pub fn find_data(
-    includes_entry: &IncludesEntry,
+pub fn find_data<'a>(
+    includes_entry: &IncludesEntry<'a>,
     key: &str,
-    includes: &ContentfulIncludes,
-) -> ParsedIncludesEntryResult {
+    includes: ContentfulIncludes<'a>,
+) -> ParsedIncludesEntryResult<'a> {
     let parsed_result = ParsedIncludesEntryResult {
-        slug: includes_entry.fields.slug.clone(),
-        title: includes_entry.fields.title.clone(),
-        entry_title: includes_entry.fields.entry_title.clone(),
-        text: includes_entry.fields.text.clone(),
-        link: includes_entry.fields.link.clone(),
+        slug: includes_entry.fields.slug,
+        title: includes_entry.fields.title,
+        entry_title: includes_entry.fields.entry_title,
+        text: includes_entry.fields.text,
+        link: includes_entry.fields.link,
         data: includes_entry.fields.data.clone(),
-        fallback_image: process_items(includes_entry.fields.fallback_image.clone(), key, includes),
+        fallback_image: process_items(includes_entry.fields.fallback_image.clone(), key, includes.clone()),
         common_terms_and_conditions_items: process_items_arr(
             includes_entry
                 .fields
                 .common_terms_and_conditions_items
                 .clone(),
             key,
-            includes,
+            includes.clone(),
         ),
-        confirmation_text: includes_entry.fields.confirmation_text.clone(),
-        error_text: includes_entry.fields.error_text.clone(),
-        confirm_button_text: includes_entry.fields.confirm_button_text.clone(),
+        confirmation_text: includes_entry.fields.confirmation_text,
+        error_text: includes_entry.fields.error_text,
+        confirm_button_text: includes_entry.fields.confirm_button_text,
         file: None,
-        components: process_items_arr(includes_entry.fields.components.clone(), key, includes),
-        labels: process_items_arr(includes_entry.fields.labels.clone(), key, includes),
-        configs: process_items_arr(includes_entry.fields.configs.clone(), key, includes),
-        images: process_items_arr(includes_entry.fields.images.clone(), key, includes),
+        components: process_items_arr(includes_entry.fields.components.clone(), key, includes.clone()),
+        labels: process_items_arr(includes_entry.fields.labels.clone(), key, includes.clone()),
+        configs: process_items_arr(includes_entry.fields.configs.clone(), key, includes.clone()),
+        images: process_items_arr(includes_entry.fields.images.clone(), key, includes.clone()),
     };
     parsed_result
 }
 
-pub fn find_and_insert(
+pub fn find_and_insert<'a>(
     link_type: &str,
     id: &str,
     key: &str,
-    includes: &ContentfulIncludes,
-    collector: &mut HashMap<String, Vec<ParsedIncludesEntry>>,
-) -> HashMap<String, Vec<ParsedIncludesEntry>> {
+    includes: ContentfulIncludes<'a>,
+    collector: &mut HashMap<String, Vec<ParsedIncludesEntry<'a>>>,
+) -> HashMap<String, Vec<ParsedIncludesEntry<'a>>> {
     if link_type == "Asset" {
         for asset in &includes.assets {
             if asset.sys.id == id {
                 let parse_asset = ParsedIncludesAssetEntry {
-                    slug: asset.fields.slug.clone(),
-                    title: asset.fields.title.clone(),
-                    text: asset.fields.text.clone(),
-                    link: asset.fields.link.clone(),
+                    slug: asset.fields.slug,
+                    title: asset.fields.title,
+                    text: asset.fields.text,
+                    link: asset.fields.link,
                     data: asset.fields.data.clone(),
                     common_terms_and_conditions_items: asset
                         .fields
                         .common_terms_and_conditions_items
                         .clone(),
-                    confirmation_text: asset.fields.confirmation_text.clone(),
-                    error_text: asset.fields.error_text.clone(),
-                    confirm_button_text: asset.fields.confirm_button_text.clone(),
+                    confirmation_text: asset.fields.confirmation_text,
+                    error_text: asset.fields.error_text,
+                    confirm_button_text: asset.fields.confirm_button_text,
                     url: asset.fields.file.as_ref().and_then(|file| file.url.clone()),
                     file: asset.fields.file.clone(),
                 };
@@ -150,11 +150,11 @@ pub fn find_and_insert(
             if includes_entry.sys.id == id {
                 match collector.get_mut(key) {
                     Some(arr) => {
-                        let record = find_data(includes_entry, key, includes);
+                        let record = find_data(includes_entry, key, includes.clone());
                         arr.push(ParsedIncludesEntry::Entry(record));
                     }
                     None => {
-                        let record = find_data(includes_entry, key, includes);
+                        let record = find_data(includes_entry, key, includes.clone());
                         collector.insert(key.to_string(), vec![ParsedIncludesEntry::Entry(record)]);
                     }
                 };
@@ -164,24 +164,14 @@ pub fn find_and_insert(
     collector.clone()
 }
 
-// pub fn parse_fields(entry: ItemEntry, includes: &ContentfulIncludes) -> ParsedFieldsResult {
-pub fn parse_fields(entry: IncludesEntry, includes: &ContentfulIncludes) -> ParsedFieldsResult {
-    ParsedFieldsResult {
-        title: entry.fields.title,
-        slug: entry.fields.slug,
-        components: process_items_arr(entry.fields.components.clone(), "components", includes),
-        labels: process_items_arr(entry.fields.labels.clone(), "labels", includes),
-        configs: process_items_arr(entry.fields.configs.clone(), "configs", includes),
-    }
-}
 
-pub fn normalize_labels(labels: Vec<ChildSys>, includes: ContentfulIncludes) -> HashMap<String, String> {
-    let mut record: HashMap<String, String> = HashMap::new();
+pub fn normalize_labels<'a>(labels: Vec<ChildSys>, includes: ContentfulIncludes<'a>) -> HashMap<String, &'a str> {
+    let mut record: HashMap<String, &'a str> = HashMap::new();
     for label in labels {
         for entry in &includes.entries {
             if label.sys.id == entry.sys.id {
                 if let Some(ref text) = entry.fields.text {
-                    record.insert(to_camel_case(&entry.fields.slug), text.clone());
+                    record.insert(to_camel_case(&entry.fields.slug), text);
                 }
             }
         }
@@ -204,10 +194,10 @@ pub fn normalize_configs(configs: Vec<ChildSys>, includes: ContentfulIncludes) -
     return record;
 }
 
-pub fn normalize_components(
+pub fn normalize_components<'a>(
     components: Option<Vec<ChildSys>>,
-    includes: ContentfulIncludes,
-) -> HashMap<String, Option<Vec<ParsedIncludesEntry>>> {
+    includes: ContentfulIncludes<'a>,
+) -> HashMap<String, Option<Vec<ParsedIncludesEntry<'a>>>> {
     let mut record: HashMap<String, Option<Vec<ParsedIncludesEntry>>> = HashMap::new();
     match components {
         Some(components) => {
@@ -215,13 +205,13 @@ pub fn normalize_components(
                 let entry = includes.entries.clone().into_iter().find(|entry| entry.sys.id == component.sys.id).unwrap();
                 record.insert(
                     to_camel_case(&entry.fields.slug),
-                    process_items(Some(component), "components", &includes)
+                    process_items(Some(component), "components", includes.clone())
                 );
             };
         },
         None => {},
     }    
-    return record;
+    record
 }
 
 pub fn normalize_response(response: ContentfulResponse, slug: String) -> NormalizeResponseResult {

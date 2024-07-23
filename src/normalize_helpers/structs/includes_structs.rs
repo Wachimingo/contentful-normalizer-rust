@@ -35,17 +35,17 @@ pub struct File {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct IncludesFields {
+pub struct IncludesFields<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub slug: Option<String>,
+    pub slug: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub title: Option<String>,
+    pub title: Option<&'a str>,
     #[serde(rename = "entryTitle", skip_serializing_if = "Option::is_none")]
-    pub entry_title: Option<String>,
+    pub entry_title: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub text: Option<String>,
+    pub text: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub link: Option<String>,
+    pub link: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<Data>,
     #[serde(rename = "fallbackImage", skip_serializing_if = "Option::is_none")]
@@ -56,11 +56,11 @@ pub struct IncludesFields {
     )]
     pub common_terms_and_conditions_items: Option<Vec<ChildSys>>,
     #[serde(rename = "confirmationText", skip_serializing_if = "Option::is_none")]
-    pub confirmation_text: Option<String>,
+    pub confirmation_text: Option<&'a str>,
     #[serde(rename = "errorText", skip_serializing_if = "Option::is_none")]
-    pub error_text: Option<String>,
+    pub error_text: Option<&'a str>,
     #[serde(rename = "confirmButtonText", skip_serializing_if = "Option::is_none")]
-    pub confirm_button_text: Option<String>,
+    pub confirm_button_text: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub file: Option<File>,
     #[serde(skip_serializing_if = "Option::is_none")]

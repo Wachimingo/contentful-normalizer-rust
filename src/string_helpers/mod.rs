@@ -6,7 +6,7 @@ pub fn capitalize(input_string: &str) -> String {
     }
 }
 
-pub fn to_camel_case(input_string: &Option<String>) -> String {
+pub fn to_camel_case<'a>(input_string: &Option<&'a str>) -> String {
     match input_string {
         Some(str) => {
             return str
