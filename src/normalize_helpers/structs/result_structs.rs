@@ -111,8 +111,6 @@ pub struct ParsedFieldsResult<'a> {
 pub struct NormalizeResponseResult<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub slug: Option<&'a str>,
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub seo: Option<Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub labels: Option<HashMap<String, &'a str>>,
     #[serde(skip_serializing_if = "Option::is_none")]

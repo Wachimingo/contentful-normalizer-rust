@@ -1,5 +1,5 @@
 use super::common_structs::ChildSys;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ItemsFields<'a> {
     pub slug: &'a str,

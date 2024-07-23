@@ -254,7 +254,7 @@ impl<'de: 'a, 'a> Deserialize<'de> for ContentfulResponse<'a> {
                 let mut includes = None;
 
                 while let Some(key) = map.next_key()? {
-                    match key {                    
+                    match key {
                         "total" => {
                             if total.is_some() {
                                 return Err(serde::de::Error::duplicate_field("total"));
@@ -293,16 +293,17 @@ impl<'de: 'a, 'a> Deserialize<'de> for ContentfulResponse<'a> {
                 }
                 // let sys =
                 //     sys.ok_or_else(|| serde::de::Error::missing_field("ContentfulResponse_sys"))?;
-                let total =
-                    total.ok_or_else(|| serde::de::Error::missing_field("ContentfulResponse_total"))?;
+                let total = total
+                    .ok_or_else(|| serde::de::Error::missing_field("ContentfulResponse_total"))?;
                 let skip =
                     skip.ok_or_else(|| serde::de::Error::missing_field("ContentfulResponse_skip"))?;
-                let limit =
-                    limit.ok_or_else(|| serde::de::Error::missing_field("ContentfulResponse_limit"))?;
-                let items =
-                    items.ok_or_else(|| serde::de::Error::missing_field("ContentfulResponse_items"))?;
-                let includes = includes
-                    .ok_or_else(|| serde::de::Error::missing_field("ContentfulResponse_includes"))?;
+                let limit = limit
+                    .ok_or_else(|| serde::de::Error::missing_field("ContentfulResponse_limit"))?;
+                let items = items
+                    .ok_or_else(|| serde::de::Error::missing_field("ContentfulResponse_items"))?;
+                let includes = includes.ok_or_else(|| {
+                    serde::de::Error::missing_field("ContentfulResponse_includes")
+                })?;
 
                 Ok(ContentfulResponse {
                     // sys,

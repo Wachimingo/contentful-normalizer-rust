@@ -1,6 +1,9 @@
 #![allow(dead_code, unused_variables, unused_mut)]
 use structs::{
-    common_structs::ChildSys, includes_structs::Data, result_structs::{NormalizeResponseResult, ParsedIncludesEntryResult}, ContentfulResponse, IncludesEntry
+    common_structs::ChildSys,
+    includes_structs::Data,
+    result_structs::{NormalizeResponseResult, ParsedIncludesEntryResult},
+    ContentfulResponse, IncludesEntry,
 };
 
 use crate::string_helpers::to_camel_case;
@@ -14,7 +17,7 @@ use self::structs::{
 pub fn process_items_arr<'a>(
     items: Option<Vec<ChildSys>>,
     key: &str,
-    includes: ContentfulIncludes<'a>,
+    includes: &ContentfulIncludes<'a>,
 ) -> Option<Vec<ParsedIncludesEntry<'a>>> {
     let mut items_collector: HashMap<String, Vec<ParsedIncludesEntry>> = HashMap::new();
     match items {
@@ -24,11 +27,11 @@ pub fn process_items_arr<'a>(
                     &item.sys.link_type,
                     &item.sys.id,
                     &key,
-                    includes.clone(),
+                    &includes,
                     &mut items_collector,
                 );
             }
-        },
+        }
         None => {}
     };
     let item_arr = items_collector
@@ -46,7 +49,7 @@ pub fn process_items_arr<'a>(
 pub fn process_items<'a>(
     item: Option<ChildSys>,
     key: &str,
-    includes: ContentfulIncludes<'a>,
+    includes: &ContentfulIncludes<'a>,
 ) -> Option<Vec<ParsedIncludesEntry<'a>>> {
     let mut items_collector: HashMap<String, Vec<ParsedIncludesEntry>> = HashMap::new();
     match item {
@@ -55,10 +58,10 @@ pub fn process_items<'a>(
                 &item.sys.link_type,
                 &item.sys.id,
                 &key,
-                includes.clone(),
+                includes,
                 &mut items_collector,
             );
-        },
+        }
         None => {}
     };
     let item_arr = items_collector
@@ -76,7 +79,7 @@ pub fn process_items<'a>(
 pub fn find_data<'a>(
     includes_entry: &IncludesEntry<'a>,
     key: &str,
-    includes: ContentfulIncludes<'a>,
+    includes: &ContentfulIncludes<'a>,
 ) -> ParsedIncludesEntryResult<'a> {
     let parsed_result = ParsedIncludesEntryResult {
         slug: includes_entry.fields.slug,
@@ -85,23 +88,23 @@ pub fn find_data<'a>(
         text: includes_entry.fields.text,
         link: includes_entry.fields.link,
         data: includes_entry.fields.data.clone(),
-        fallback_image: process_items(includes_entry.fields.fallback_image.clone(), key, includes.clone()),
+        fallback_image: process_items(includes_entry.fields.fallback_image.clone(), key, includes),
         common_terms_and_conditions_items: process_items_arr(
             includes_entry
                 .fields
                 .common_terms_and_conditions_items
                 .clone(),
             key,
-            includes.clone(),
+            includes,
         ),
         confirmation_text: includes_entry.fields.confirmation_text,
         error_text: includes_entry.fields.error_text,
         confirm_button_text: includes_entry.fields.confirm_button_text,
         file: None,
-        components: process_items_arr(includes_entry.fields.components.clone(), key, includes.clone()),
-        labels: process_items_arr(includes_entry.fields.labels.clone(), key, includes.clone()),
-        configs: process_items_arr(includes_entry.fields.configs.clone(), key, includes.clone()),
-        images: process_items_arr(includes_entry.fields.images.clone(), key, includes.clone()),
+        components: process_items_arr(includes_entry.fields.components.clone(), key, includes),
+        labels: process_items_arr(includes_entry.fields.labels.clone(), key, includes),
+        configs: process_items_arr(includes_entry.fields.configs.clone(), key, includes),
+        images: process_items_arr(includes_entry.fields.images.clone(), key, includes),
     };
     parsed_result
 }
@@ -110,7 +113,7 @@ pub fn find_and_insert<'a>(
     link_type: &str,
     id: &str,
     key: &str,
-    includes: ContentfulIncludes<'a>,
+    includes: &ContentfulIncludes<'a>,
     collector: &mut HashMap<String, Vec<ParsedIncludesEntry<'a>>>,
 ) -> HashMap<String, Vec<ParsedIncludesEntry<'a>>> {
     if link_type == "Asset" {
@@ -150,11 +153,11 @@ pub fn find_and_insert<'a>(
             if includes_entry.sys.id == id {
                 match collector.get_mut(key) {
                     Some(arr) => {
-                        let record = find_data(includes_entry, key, includes.clone());
+                        let record = find_data(includes_entry, key, &includes);
                         arr.push(ParsedIncludesEntry::Entry(record));
                     }
                     None => {
-                        let record = find_data(includes_entry, key, includes.clone());
+                        let record = find_data(includes_entry, key, &includes);
                         collector.insert(key.to_string(), vec![ParsedIncludesEntry::Entry(record)]);
                     }
                 };
@@ -164,8 +167,10 @@ pub fn find_and_insert<'a>(
     collector.clone()
 }
 
-
-pub fn normalize_labels<'a>(labels: Vec<ChildSys>, includes: ContentfulIncludes<'a>) -> HashMap<String, &'a str> {
+pub fn normalize_labels<'a>(
+    labels: Vec<ChildSys>,
+    includes: &ContentfulIncludes<'a>,
+) -> HashMap<String, &'a str> {
     let mut record: HashMap<String, &'a str> = HashMap::new();
     for label in labels {
         for entry in &includes.entries {
@@ -179,7 +184,10 @@ pub fn normalize_labels<'a>(labels: Vec<ChildSys>, includes: ContentfulIncludes<
     return record;
 }
 
-pub fn normalize_configs(configs: Vec<ChildSys>, includes: ContentfulIncludes) -> HashMap<String, Data> {
+pub fn normalize_configs(
+    configs: Vec<ChildSys>,
+    includes: &ContentfulIncludes,
+) -> HashMap<String, Data> {
     let mut record: HashMap<String, Data> = HashMap::new();
     for config in configs {
         for entry in &includes.entries {
@@ -196,28 +204,32 @@ pub fn normalize_configs(configs: Vec<ChildSys>, includes: ContentfulIncludes) -
 
 pub fn normalize_components<'a>(
     components: Option<Vec<ChildSys>>,
-    includes: ContentfulIncludes<'a>,
+    includes: &ContentfulIncludes<'a>,
 ) -> HashMap<String, Option<Vec<ParsedIncludesEntry<'a>>>> {
     let mut record: HashMap<String, Option<Vec<ParsedIncludesEntry>>> = HashMap::new();
     match components {
         Some(components) => {
             for component in components {
-                let entry = includes.entries.clone().into_iter().find(|entry| entry.sys.id == component.sys.id).unwrap();
+                let entry = includes
+                    .entries
+                    .clone()
+                    .into_iter()
+                    .find(|entry| entry.sys.id == component.sys.id)
+                    .unwrap();
                 record.insert(
                     to_camel_case(&entry.fields.slug),
-                    process_items(Some(component), "components", includes.clone())
+                    process_items(Some(component), "components", &includes),
                 );
-            };
-        },
-        None => {},
-    }    
+            }
+        }
+        None => {}
+    }
     record
 }
 
 pub fn normalize_response(response: ContentfulResponse, slug: String) -> NormalizeResponseResult {
     let main_page_entry = response
         .items
-        .clone()
         .into_iter()
         .find(|item| item.fields.slug == slug)
         .unwrap();
@@ -225,15 +237,15 @@ pub fn normalize_response(response: ContentfulResponse, slug: String) -> Normali
         slug: Some(main_page_entry.fields.slug),
         labels: Some(normalize_labels(
             main_page_entry.fields.labels.unwrap(),
-            response.includes.clone(),
+            &response.includes,
         )),
         configs: Some(normalize_configs(
             main_page_entry.fields.configs.unwrap(),
-            response.includes.clone(),
+            &response.includes,
         )),
         components: Some(normalize_components(
             main_page_entry.fields.components,
-            response.includes.clone(),
+            &response.includes,
         )),
     }
 }
