@@ -202,25 +202,20 @@ pub fn normalize_configs(
 }
 
 pub fn normalize_components<'a>(
-    components: Option<Vec<ChildSys>>,
-    includes: &ContentfulIncludes<'a>,
+    components: Vec<ChildSys>,
+    includes: ContentfulIncludes<'a>,
 ) -> HashMap<String, Option<Vec<ParsedIncludesEntry<'a>>>> {
     let mut record: HashMap<String, Option<Vec<ParsedIncludesEntry>>> = HashMap::new();
-    match components {
-        Some(components) => {
-            for component in components {
-                let entry = includes
-                    .entries
-                    .iter()
-                    .find(|entry| entry.sys.id == component.sys.id)
-                    .unwrap();
-                record.insert(
-                    to_camel_case(&entry.fields.slug),
-                    process_items(&Some(component), "components", &includes),
-                );
-            }
-        }
-        None => {}
+    for component in components {
+        let entry = includes
+            .entries
+            .iter()
+            .find(|entry| entry.sys.id == component.sys.id)
+            .unwrap();
+        record.insert(
+            to_camel_case(&entry.fields.slug),
+            process_items(&Some(component), "components", &includes),
+        );
     }
     record
 }
@@ -242,8 +237,8 @@ pub fn normalize_response(response: ContentfulResponse, slug: String) -> Normali
             &response.includes,
         )),
         components: Some(normalize_components(
-            main_page_entry.fields.components,
-            &response.includes,
+            main_page_entry.fields.components.unwrap(),
+            response.includes,
         )),
     }
 }
