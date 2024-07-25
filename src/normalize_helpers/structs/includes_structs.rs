@@ -23,15 +23,15 @@ pub struct FileDetails {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct File {
+pub struct File<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub url: Option<String>,
+    pub url: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub details: Option<FileDetails>,
     #[serde(rename = "fileName", skip_serializing_if = "Option::is_none")]
-    pub file_name: Option<String>,
+    pub file_name: Option<&'a str>,
     #[serde(rename = "contentType", skip_serializing_if = "Option::is_none")]
-    pub content_type: Option<String>,
+    pub content_type: Option<&'a str>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -62,7 +62,7 @@ pub struct IncludesFields<'a> {
     #[serde(rename = "confirmButtonText", skip_serializing_if = "Option::is_none")]
     pub confirm_button_text: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub file: Option<File>,
+    pub file: Option<File<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub components: Option<Vec<ChildSys>>,
     #[serde(skip_serializing_if = "Option::is_none")]

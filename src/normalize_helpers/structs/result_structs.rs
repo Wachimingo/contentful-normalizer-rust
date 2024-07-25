@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use super::*;
 use common_structs::ChildSys;
 use includes_structs::{Data, File};
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Serialize, Serializer};
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct ParsedIncludesAssetEntry<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub slug: Option<&'a str>,
@@ -16,12 +16,12 @@ pub struct ParsedIncludesAssetEntry<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub link: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub data: Option<Data>,
+    pub data: Option<&'a Data>,
     #[serde(
         rename = "commonTermsAndConditionsItems",
         skip_serializing_if = "Option::is_none"
     )]
-    pub common_terms_and_conditions_items: Option<Vec<ChildSys>>,
+    pub common_terms_and_conditions_items: Option<&'a Vec<ChildSys>>,
     #[serde(rename = "confirmationText", skip_serializing_if = "Option::is_none")]
     pub confirmation_text: Option<&'a str>,
     #[serde(rename = "errorText", skip_serializing_if = "Option::is_none")]
@@ -29,9 +29,9 @@ pub struct ParsedIncludesAssetEntry<'a> {
     #[serde(rename = "confirmButtonText", skip_serializing_if = "Option::is_none")]
     pub confirm_button_text: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub url: Option<String>,
+    pub url: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub file: Option<File>,
+    pub file: Option<&'a File<'a>>,
 }
 
 #[derive(Clone, Debug)]
@@ -67,7 +67,7 @@ pub struct ParsedIncludesEntryResult<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub link: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub data: Option<Data>,
+    pub data: Option<&'a Data>,
     #[serde(rename = "fallbackImage", skip_serializing_if = "Option::is_none")]
     pub fallback_image: Option<Vec<ParsedIncludesEntry<'a>>>,
     #[serde(
@@ -82,7 +82,7 @@ pub struct ParsedIncludesEntryResult<'a> {
     #[serde(rename = "confirmButtonText", skip_serializing_if = "Option::is_none")]
     pub confirm_button_text: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub file: Option<File>,
+    pub file: Option<File<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub components: Option<Vec<ParsedIncludesEntry<'a>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -114,7 +114,7 @@ pub struct NormalizeResponseResult<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub labels: Option<HashMap<String, &'a str>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub configs: Option<HashMap<String, Data>>,
+    pub configs: Option<HashMap<String, &'a Data>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub components: Option<HashMap<String, Option<Vec<ParsedIncludesEntry<'a>>>>>,
 }

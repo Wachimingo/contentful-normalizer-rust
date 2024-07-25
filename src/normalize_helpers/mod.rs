@@ -17,7 +17,7 @@ use self::structs::{
 pub fn process_items_arr<'a>(
     items: &Option<Vec<ChildSys>>,
     key: &str,
-    includes: &ContentfulIncludes<'a>,
+    includes: &'a ContentfulIncludes<'a>,
 ) -> Option<Vec<ParsedIncludesEntry<'a>>> {
     let mut items_collector: HashMap<String, Vec<ParsedIncludesEntry>> = HashMap::new();
     match items {
@@ -49,7 +49,7 @@ pub fn process_items_arr<'a>(
 pub fn process_items<'a>(
     item: &Option<ChildSys>,
     key: &str,
-    includes: &ContentfulIncludes<'a>,
+    includes: &'a ContentfulIncludes<'a>,
 ) -> Option<Vec<ParsedIncludesEntry<'a>>> {
     let mut items_collector: HashMap<String, Vec<ParsedIncludesEntry>> = HashMap::new();
     match item {
@@ -77,9 +77,9 @@ pub fn process_items<'a>(
 }
 
 pub fn find_data<'a>(
-    includes_entry: &IncludesEntry<'a>,
+    includes_entry: &'a IncludesEntry<'a>,
     key: &str,
-    includes: &ContentfulIncludes<'a>,
+    includes: &'a ContentfulIncludes<'a>,
 ) -> ParsedIncludesEntryResult<'a> {
     let parsed_result = ParsedIncludesEntryResult {
         slug: includes_entry.fields.slug,
@@ -87,7 +87,7 @@ pub fn find_data<'a>(
         entry_title: includes_entry.fields.entry_title,
         text: includes_entry.fields.text,
         link: includes_entry.fields.link,
-        data: includes_entry.fields.data.clone(),
+        data: includes_entry.fields.data.as_ref(),
         fallback_image: process_items(&includes_entry.fields.fallback_image, key, includes),
         common_terms_and_conditions_items: process_items_arr(
             &includes_entry
@@ -112,7 +112,7 @@ pub fn find_and_insert<'a>(
     link_type: &str,
     id: &str,
     key: &str,
-    includes: &ContentfulIncludes<'a>,
+    includes: &'a ContentfulIncludes<'a>,
     collector: &mut HashMap<String, Vec<ParsedIncludesEntry<'a>>>,
 ) -> HashMap<String, Vec<ParsedIncludesEntry<'a>>> {
     if link_type == "Asset" {
@@ -123,16 +123,16 @@ pub fn find_and_insert<'a>(
                     title: asset.fields.title,
                     text: asset.fields.text,
                     link: asset.fields.link,
-                    data: asset.fields.data.clone(),
+                    data: asset.fields.data.as_ref(),
                     common_terms_and_conditions_items: asset
                         .fields
                         .common_terms_and_conditions_items
-                        .clone(),
+                        .as_ref(),
                     confirmation_text: asset.fields.confirmation_text,
                     error_text: asset.fields.error_text,
                     confirm_button_text: asset.fields.confirm_button_text,
-                    url: asset.fields.file.as_ref().and_then(|file| file.url.clone()),
-                    file: asset.fields.file.clone(),
+                    url: asset.fields.file.as_ref().and_then(|file| file.url),
+                    file: asset.fields.file.as_ref(),
                 };
                 match collector.get_mut(key) {
                     Some(arr) => {
@@ -183,17 +183,17 @@ pub fn normalize_labels<'a>(
     return record;
 }
 
-pub fn normalize_configs(
+pub fn normalize_configs<'a>(
     configs: Vec<ChildSys>,
-    includes: &ContentfulIncludes,
-) -> HashMap<String, Data> {
-    let mut record: HashMap<String, Data> = HashMap::new();
+    includes: &'a ContentfulIncludes<'a>,
+) -> HashMap<String, &'a Data> {
+    let mut record: HashMap<String, &Data> = HashMap::new();
     for config in configs {
         for entry in &includes.entries {
             if config.sys.id == entry.sys.id {
                 // This way allows for coping the struct values, compared to match statement where data couldn't be moved
                 if let Some(ref data) = entry.fields.data {
-                    record.insert(to_camel_case(&entry.fields.slug), data.clone());
+                    record.insert(to_camel_case(&entry.fields.slug), data);
                 }
             }
         }
@@ -203,7 +203,7 @@ pub fn normalize_configs(
 
 pub fn normalize_components<'a>(
     components: Vec<ChildSys>,
-    includes: ContentfulIncludes<'a>,
+    includes: &'a ContentfulIncludes<'a>,
 ) -> HashMap<String, Option<Vec<ParsedIncludesEntry<'a>>>> {
     let mut record: HashMap<String, Option<Vec<ParsedIncludesEntry>>> = HashMap::new();
     for component in components {
@@ -220,25 +220,25 @@ pub fn normalize_components<'a>(
     record
 }
 
-pub fn normalize_response(response: ContentfulResponse, slug: String) -> NormalizeResponseResult {
-    let main_page_entry = response
-        .items
-        .into_iter()
-        .find(|item| item.fields.slug == slug)
-        .unwrap();
-    NormalizeResponseResult {
-        slug: Some(main_page_entry.fields.slug),
-        labels: Some(normalize_labels(
-            main_page_entry.fields.labels.unwrap(),
-            &response.includes,
-        )),
-        configs: Some(normalize_configs(
-            main_page_entry.fields.configs.unwrap(),
-            &response.includes,
-        )),
-        components: Some(normalize_components(
-            main_page_entry.fields.components.unwrap(),
-            response.includes,
-        )),
-    }
-}
+// pub fn normalize_response(response: ContentfulResponse, slug: String) -> NormalizeResponseResult {
+//     let main_page_entry = response
+//         .items
+//         .into_iter()
+//         .find(|item| item.fields.slug == slug)
+//         .unwrap();
+//     NormalizeResponseResult {
+//         slug: Some(main_page_entry.fields.slug),
+//         labels: Some(normalize_labels(
+//             main_page_entry.fields.labels.unwrap(),
+//             &response.includes,
+//         )),
+//         configs: Some(normalize_configs(
+//             main_page_entry.fields.configs.unwrap(),
+//             &response.includes,
+//         )),
+//         components: Some(normalize_components(
+//             main_page_entry.fields.components.unwrap(),
+//             response.includes,
+//         )),
+//     }
+// }
