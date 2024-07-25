@@ -2,8 +2,7 @@
 use structs::{
     common_structs::ChildSys,
     includes_structs::Data,
-    result_structs::{NormalizeResponseResult, ParsedIncludesEntryResult},
-    ContentfulResponse, IncludesEntry,
+    result_structs::ParsedIncludesEntryResult, IncludesEntry,
 };
 
 use crate::string_helpers::to_camel_case;
@@ -114,7 +113,7 @@ pub fn find_and_insert<'a>(
     key: &str,
     includes: &'a ContentfulIncludes<'a>,
     collector: &mut HashMap<String, Vec<ParsedIncludesEntry<'a>>>,
-) -> HashMap<String, Vec<ParsedIncludesEntry<'a>>> {
+) {
     if link_type == "Asset" {
         for asset in &includes.assets {
             if asset.sys.id == id {
@@ -163,7 +162,6 @@ pub fn find_and_insert<'a>(
             }
         }
     }
-    collector.clone()
 }
 
 pub fn normalize_labels<'a>(
